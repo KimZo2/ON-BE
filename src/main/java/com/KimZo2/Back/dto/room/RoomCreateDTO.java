@@ -11,4 +11,5 @@ public class RoomCreateDTO {
     private boolean isPrivate;
     private String password;
     private int roomTime;
+    private int roomType;
 }
