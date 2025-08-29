@@ -1,18 +1,14 @@
 package com.KimZo2.Back.repository;
 
 import com.KimZo2.Back.entity.Room;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RoomRepository {
+import java.util.Optional;
+import java.util.UUID;
 
-    // 방 생성 ( 저장 )
-    void save(Room room);
+public interface RoomRepository extends JpaRepository<Room, UUID> {
 
-    // 방 조회
-    Room findByIsPrivate();
+    boolean existsByNameIgnoreCaseAndStatus(String name, boolean status);
 
-    // 방 이름 조회
-    Room findByName();
-
-    // 방 제거
-
+    Optional<Room> findById(UUID roomId);
 }
