@@ -34,8 +34,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     * */
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");
+        // @MessageMapping
         config.setApplicationDestinationPrefixes("/app");
+        // 구독용 (전체, 사용자)
+        config.enableSimpleBroker("/topic", "/queue");
+        // 개인에게만 보내기 (/user/{username}/queue 자동 매핑)
+        config.setUserDestinationPrefix("/user");
     }
 
     /**
