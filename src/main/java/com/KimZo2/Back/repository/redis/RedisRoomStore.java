@@ -33,17 +33,18 @@ public class RedisRoomStore {
             String base = "room:" + id;
 
             Map<byte[], byte[]> map = new HashMap<>();
-            map.put(b("name"), b(roomName));
-            map.put(b("private"), b(isPrivate ? "1" : "0"));
-            map.put(b("type"), b(String.valueOf(roomType)));
-            map.put(b("max"), b(String.valueOf(max)));
-            map.put(b("current"), b("0"));
+            map.put(b("roomName"), b(roomName));
+            map.put(b("visibility"), b(isPrivate ? "1" : "0"));
+            map.put(b("roomBackgroundImg"), b(String.valueOf(roomType)));
+            map.put(b("roomMaximumPersonCnt"), b(String.valueOf(max)));
+            map.put(b("roomCurrentPersonCnt"), b("0"));
             map.put(b("peak"), b("0"));
             map.put(b("creatorId"), b(creatorId.toString()));
             map.put(b("createdAtMs"), b(String.valueOf(nowMs)));
             map.put(b("lastActiveMs"), b(String.valueOf(nowMs)));
             map.put(b("ttlSec"), b(String.valueOf(ttl.toSeconds())));
             map.put(b("state"), b("CREATED"));
+            map.put(b("active"), b("true"));
             con.hMSet(b(base), map);
 
             // 방장 기능 추가?
