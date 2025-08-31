@@ -1,6 +1,8 @@
 package com.KimZo2.Back.repository.redis;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -11,9 +13,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+
 @Component
 @RequiredArgsConstructor
 public class RedisRoomStore {
+    private static final Logger log = LoggerFactory.getLogger(RedisRoomStore.class);
+
     private final StringRedisTemplate redisTemplate;
 
     /**
@@ -21,7 +26,7 @@ public class RedisRoomStore {
      * setIfAbsent = SETNX (=key가 없을 때만 세팅)
      */
     public boolean lockRoomName(String roomName, String roomId, Duration roomTTL) {
-        String key = "roomname:" + roomName;
+        String key = "roomName:" + roomName;
         Boolean ok = redisTemplate.opsForValue().setIfAbsent(key, roomId, roomTTL);
         return Boolean.TRUE.equals(ok);
     }
@@ -62,12 +67,23 @@ public class RedisRoomStore {
     }
 
     public void releaseNameLock(String roomName) {
-        redisTemplate.delete("roomname:" + roomName);
+        redisTemplate.delete("roomName:" + roomName);
     }
 
+    public void deleteRoomRuntimeIfPresent(UUID roomId) {
+        String key = "room:" + roomId;
+
+        try {
+            Boolean exists = redisTemplate.hasKey(key);
+            if (Boolean.TRUE.equals(exists)) {
+                redisTemplate.delete(key);
+            }
+        } catch (Exception e) {
+            // 모니터링만 하도록
+            log.warn("RedisRoomStore - Redis 런타임 삭제 실패 roomId={}", roomId, e);
+        }
+    }
 
     // String -> byte 변환기
     private byte[] b(String s){ return s.getBytes(StandardCharsets.UTF_8); }
-
-
 }
