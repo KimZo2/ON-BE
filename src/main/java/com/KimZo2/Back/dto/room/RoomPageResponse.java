@@ -5,8 +5,7 @@ import java.util.List;
 public record RoomPageResponse(
         int page,
         int size,
-        long totalElements,
-        int totalPages,
+        int totalElement,
         boolean hasNext,
         List<RoomListItemResponse> rooms
 ) {}
