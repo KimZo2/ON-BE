@@ -13,7 +13,7 @@ import java.util.*;
 public class RedisRoomList {
     private final StringRedisTemplate redis;
     private static final String Z_PUBLIC = "rooms:public";
-    private static final String H_PREFIX = "room:";
+    private static final String H_PREFIX = "roomName:";
 
     // 전체 public 페이지 수 찾기
     public long countPublic() {
