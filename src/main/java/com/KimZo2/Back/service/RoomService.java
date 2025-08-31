@@ -5,6 +5,10 @@ import com.KimZo2.Back.dto.room.RoomListItemResponse;
 import com.KimZo2.Back.dto.room.RoomPageResponse;
 import com.KimZo2.Back.entity.Room;
 import com.KimZo2.Back.entity.User;
+import com.KimZo2.Back.exception.login.UserNotFoundException;
+import com.KimZo2.Back.exception.room.DuplicateRoomNameException;
+import com.KimZo2.Back.exception.room.PasswordNotIncludeException;
+import com.KimZo2.Back.exception.room.RoomStoreFailException;
 import com.KimZo2.Back.repository.RoomRepository;
 import com.KimZo2.Back.repository.UserRepository;
 import com.KimZo2.Back.repository.redis.RedisRoomList;
@@ -18,7 +22,6 @@ import java.time.Duration;
 import java.util.*;
 
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class RoomService {
 
@@ -29,12 +32,13 @@ public class RoomService {
     private final RedisRoomList redisRoomList;
 
     // 방 생성 -> PostGre랑 Redis에 모두 저장 필요
+    @Transactional
     public UUID createRoom(RoomCreateDTO dto) {
         String creatorNickname = dto.getCreatorNickname();
 
         // user 정보 찾기
         User creator = userRepository.findByNickname(creatorNickname);
-        if(creator == null) throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        if(creator == null) throw new UserNotFoundException("사용자를 찾을 수 없습니다.");
 
         // roomId 생성
         UUID roomId = UUID.randomUUID();
@@ -45,7 +49,7 @@ public class RoomService {
         // 활성화 되어 있는 방 중 중복 이름 판단 - Redis
         String roomName = dto.getName().trim().toLowerCase(Locale.ROOT); // 소문자/대문자/띄어쓰기 방 이름 모두 중복 판단
         if(!validateDuplicatedRoomName(roomName, roomId, roomTTL)){
-            throw new IllegalStateException("이미 활성화된 같은 이름의 방이 있습니다.");
+            throw new DuplicateRoomNameException("이미 활성화된 같은 이름의 방이 있습니다.");
         }
 
         // PostGre 레코드 생성
@@ -61,15 +65,15 @@ public class RoomService {
         // room private, 비밀번호 Encode 설정
         if(dto.isPrivate()) {
             String pwdRaw = dto.getPassword();
-            if(pwdRaw == null || pwdRaw.isBlank()) throw new IllegalArgumentException("비밀방 비밀번호 필요");
+            if(pwdRaw == null || pwdRaw.isBlank()) throw new PasswordNotIncludeException("비밀방 비밀번호 필요");
             newRoom.makePrivate(passwordEncoder.encode(pwdRaw));
         }
 
-        // PostGre 커밋
-        roomRepository.save(newRoom);
-
         // Reids 런타임 세팅
         try {
+            // PostGre 커밋
+            roomRepository.save(newRoom);
+
             long now = System.currentTimeMillis();
             redisRoomStore.createRoomRuntime(
                     roomId,
@@ -81,15 +85,14 @@ public class RoomService {
                     roomTTL,
                     now
             );
-        } catch (RuntimeException e) {
+
+            return roomId;
+        } catch (RoomStoreFailException e) {
             // Redis 저장 실패 : 이름 락 해제
             redisRoomStore.releaseNameLock(roomName);
-
-            // 트랜잭션 실패 반영 로직 둘거임?
+            redisRoomStore.deleteRoomRuntimeIfPresent(roomId);
             throw e;
         }
-
-        return roomId;
     }
 
     // 방 이름 중복 조회 -> 현재 방의 상태가 active인 방 중 중복 이름 존재하는지 확인하는 로직
@@ -107,7 +110,7 @@ public class RoomService {
         long total = redisRoomList.countPublic();
         // 만약 public 방이 0개라면 list 0개 return
         if (total == 0) {
-            return new RoomPageResponse(1, s, 0, 0, false, List.of());
+            return new RoomPageResponse(1, s, 0, false, List.of());
         }
 
         // 만약 total 페이지가 요청한 페이지 수보다 적다면
@@ -124,6 +127,7 @@ public class RoomService {
         List<RoomListItemResponse> items = new ArrayList<>(ids.size());
         List<String> prune = new ArrayList<>();
 
+        int totalElement = ids.size();
         for (int i = 0; i < ids.size(); i++) {
             String id = ids.get(i);
             Map<String, String> h = hashes.get(i);
@@ -133,7 +137,7 @@ public class RoomService {
             // 비즈니스 규칙
             String visibility = h.getOrDefault("visibility", "0"); // 0=PUBLIC, 1=PRIVATE
             String active = h.getOrDefault("active", "true");
-            if (!"0".equals(visibility) || !"true".equalsIgnoreCase(active)) { prune.add(id); continue; }
+            if (!"0".equals(visibility) || !"true".equalsIgnoreCase(active)) { prune.add(id); totalElement--; continue; }
 
             // DTO 매핑
             items.add(new RoomListItemResponse(
@@ -149,12 +153,11 @@ public class RoomService {
         if (!prune.isEmpty()) redisRoomList.removeFromPublicIndex(prune);
 
         boolean hasNext = p < totalPages;
-        return new RoomPageResponse(p, s, total, totalPages, hasNext, items);
+        return new RoomPageResponse(p, s, totalElement, hasNext, items);
     }
 
     private static int toInt(String s, int def) {
         try { return (s == null) ? def : Integer.parseInt(s); }
         catch (NumberFormatException e) { return def; }
     }
-
 }
