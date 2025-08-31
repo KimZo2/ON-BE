@@ -1,4 +1,4 @@
-package com.KimZo2.Back.exception;
+package com.KimZo2.Back.exception.login;
 
 public class DuplicateUserIdException extends RuntimeException {
     public DuplicateUserIdException(String message) {

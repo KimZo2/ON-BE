@@ -1,4 +1,4 @@
-package com.KimZo2.Back.exception;
+package com.KimZo2.Back.exception.login;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
