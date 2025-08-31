@@ -11,13 +11,16 @@ import java.util.Map;
 public class RedisFunction {
     private final StringRedisTemplate redisTemplate;
 
+    // 현재 방이 존재하는지 확인 로직
     public boolean roomHasKey(String roomKey){
         boolean ok = redisTemplate.hasKey(roomKey);
         return Boolean.TRUE.equals(ok);
     }
 
+    // 방이 private인지
     public boolean rommIsPrivate(String roomKey) {
         Map<Object, Object> roomHash = redisTemplate.opsForHash().entries(roomKey);
         return !"0".equals(String.valueOf(roomHash.getOrDefault("private", "0")));
     }
+
 }
