@@ -13,8 +13,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
         WebMvcConfigurer.super.addCorsMappings(registry);
         registry.addMapping("/**")
                 .allowedOrigins("http://localhost:5173", "http://localhost:3000", "http://192.168.0.78:3000", "http://192.168.1.111:3000")
-//                .allowedOrigins("http://localhost:3000")
-//                .allowedOrigins("http://192.168.0.78:3000")
                 .allowedMethods("*")
                 .allowedHeaders("*")
                 .allowCredentials(true);

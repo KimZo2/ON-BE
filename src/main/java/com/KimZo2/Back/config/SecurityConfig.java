@@ -30,10 +30,8 @@ public class SecurityConfig {
                 .securityMatcher("/**")
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth ->
-                                auth.requestMatchers(allowUrls).permitAll()
-//                        .requestMatchers("/auth/login/kakao/**").permitAll()
+                        auth.requestMatchers(allowUrls).permitAll()
                         .anyRequest().authenticated()
-
                 )
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable());
