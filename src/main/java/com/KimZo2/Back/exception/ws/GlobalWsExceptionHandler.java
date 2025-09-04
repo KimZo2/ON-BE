@@ -11,7 +11,7 @@ public class GlobalWsExceptionHandler {
     @MessageExceptionHandler({
             RoomNotFoundOrExpiredException.class,
             RoomFullException.class,
-            BadPasswordException.class
+            BadPasswordException.class,
     })
 
     @SendToUser("/queue/errors")
@@ -24,10 +24,24 @@ public class GlobalWsExceptionHandler {
         return new ErrorResponse(code, e.getMessage());
     }
 
+    @MessageExceptionHandler(BadDestinationException.class)
+    @SendToUser("/queue/errors")
+    public ErrorResponse handleBadDestination(BadDestinationException e) {
+        return new ErrorResponse("INVALID_DEST", e.getMessage());
+    }
+
+    @MessageExceptionHandler(RoomAccessDeniedException.class)
+    @SendToUser("/queue/errors")
+    public ErrorResponse handleAccessDenied(BadDestinationException e) {
+        return new ErrorResponse("INVALID_USER", e.getMessage());
+    }
+
     @MessageExceptionHandler(Exception.class)
     @SendToUser("/queue/errors")
     public ErrorResponse handleOthers(Exception e) {
         return new ErrorResponse("ERROR", "알 수 없는 오류가 발생했습니다.");
     }
+
+
 }
 

@@ -44,7 +44,9 @@ public class SocketService {
         if (r == -1) throw new RoomNotFoundOrExpiredException("방이 존재하지 않거나 만료되었습니다.");
         if (r == -2) throw new RoomFullException("정원이 가득 찼습니다.");
 
+        // 인원 추가 로직
     }
+
 
     // 방 비밀번호 조회
     public void checekPassword(String roomPW, UUID roomId) {
@@ -67,5 +69,4 @@ public class SocketService {
             throw new BadPasswordException("비밀번호가 올바르지 않습니다.");
         }
     }
-
 }

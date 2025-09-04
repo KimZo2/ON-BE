@@ -22,7 +22,6 @@ import java.util.Map;
 @RestController
 @Validated
 @RequiredArgsConstructor
-@RequestMapping("/rooms")
 public class RoomController {
 
     private static final Logger log = LoggerFactory.getLogger(RoomController.class);
@@ -30,7 +29,7 @@ public class RoomController {
     private final RoomService roomService;
 
     // 방 생성
-    @PostMapping
+    @PostMapping("/room")
     @Operation(summary="방 생성", description="RoomCreateDTO로 방을 생성")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "방 생성 성공"),
@@ -48,7 +47,7 @@ public class RoomController {
     }
 
     // public 방 조회
-    @GetMapping
+    @GetMapping("/room")
     @Operation(summary="방 List 조회", description="page, size를 통해 방 리스트 반환")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -59,7 +58,7 @@ public class RoomController {
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "6") @Min(1) int size
     ) {
-        log.info("RoomController - POST /rooms  -  실행");
+        log.info("RoomController - Get /rooms  -  실행");
 
         return roomService.searchRoom(page, size);
     }

@@ -1,6 +1,6 @@
 package com.KimZo2.Back.config;
 
-import com.KimZo2.Back.util.JwtUtil;
+import com.KimZo2.Back.security.jwt.JwtUtil;
 import com.KimZo2.Back.websocket.AuthChannelInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;

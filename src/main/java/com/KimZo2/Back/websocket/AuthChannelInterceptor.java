@@ -1,6 +1,6 @@
 package com.KimZo2.Back.websocket;
 
-import com.KimZo2.Back.util.JwtUtil;
+import com.KimZo2.Back.security.jwt.JwtUtil;
 import org.springframework.messaging.*;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.support.ChannelInterceptor;

@@ -13,6 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter @Setter
 @Table(name = "users")
+@ToString
 public class User {
 
     @Id
@@ -45,4 +46,6 @@ public class User {
         rooms.add(room);
         room.setUser(this);
     }
+
+
 }

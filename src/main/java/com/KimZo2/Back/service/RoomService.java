@@ -14,6 +14,8 @@ import com.KimZo2.Back.repository.UserRepository;
 import com.KimZo2.Back.repository.redis.RedisRoomList;
 import com.KimZo2.Back.repository.redis.RedisRoomStore;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,9 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class RoomService {
+
+    private static final Logger log = LoggerFactory.getLogger(RoomService.class);
+
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -102,14 +107,17 @@ public class RoomService {
 
     // 방 조회
     public RoomPageResponse searchRoom(int page, int size){
+        log.info("RoomService - searchRoom  -  실행");
+
         // page와 size 정규화
         int p = Math.max(page, 1);
-        int s = Math.min(Math.max(size, 1), 10); // 오류 방지를 위해 최대 10개로만
+        int s = Math.min(Math.max(size, 1), 6); // 오류 방지를 위해 최대 10개로만
 
         // 전체 public 인덱스 개수
         long total = redisRoomList.countPublic();
         // 만약 public 방이 0개라면 list 0개 return
         if (total == 0) {
+            log.info("RoomService - RoomPageResponse : total == 0");
             return new RoomPageResponse(1, s, 0, false, List.of());
         }
 
@@ -124,20 +132,31 @@ public class RoomService {
         // 파이프라인으로 Hash 일괄 로드 -> redis와의 RTT 줄이기
         List<Map<String, String>> hashes = redisRoomList.findRoomsAsHashes(ids);
 
+        log.info("RoomService - RoomPageResponse : hashes.size() = " + hashes.size());
+
         List<RoomListItemResponse> items = new ArrayList<>(ids.size());
         List<String> prune = new ArrayList<>();
 
         int totalElement = ids.size();
+
+        log.info("RoomService - RoomPageResponse : totalElement = " + totalElement);
+
         for (int i = 0; i < ids.size(); i++) {
             String id = ids.get(i);
             Map<String, String> h = hashes.get(i);
 
-            if (h == null || h.isEmpty()) { prune.add(id); continue; }
+            if (h == null || h.isEmpty()) {
+                prune.add(id);
+                log.info("RoomService - RoomPageResponse : h == null");
+                continue; }
 
             // 비즈니스 규칙
             String visibility = h.getOrDefault("visibility", "0"); // 0=PUBLIC, 1=PRIVATE
             String active = h.getOrDefault("active", "true");
-            if (!"0".equals(visibility) || !"true".equalsIgnoreCase(active)) { prune.add(id); totalElement--; continue; }
+            if (!"0".equals(visibility) || !"true".equalsIgnoreCase(active)) {
+                prune.add(id);
+                log.info("RoomService - RoomPageResponse : prune.add(id) = " + id);
+                continue; }
 
             // DTO 매핑
             items.add(new RoomListItemResponse(
@@ -149,11 +168,13 @@ public class RoomService {
             ));
         }
 
+        log.info("RoomService - RoomPageResponse : items.size" + items.size());
+
         // 정합성 보수 -> redis HASH에는 사라졋지만 zset인덱스에는 남아있음
         if (!prune.isEmpty()) redisRoomList.removeFromPublicIndex(prune);
 
         boolean hasNext = p < totalPages;
-        return new RoomPageResponse(p, s, totalElement, hasNext, items);
+        return new RoomPageResponse(p, s, items.size(), hasNext, items);
     }
 
     private static int toInt(String s, int def) {
