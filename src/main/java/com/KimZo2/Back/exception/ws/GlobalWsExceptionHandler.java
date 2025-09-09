@@ -32,7 +32,7 @@ public class GlobalWsExceptionHandler {
 
     @MessageExceptionHandler(RoomAccessDeniedException.class)
     @SendToUser("/queue/errors")
-    public ErrorResponse handleAccessDenied(BadDestinationException e) {
+    public ErrorResponse handleRoomAccessDenied(BadDestinationException e) {
         return new ErrorResponse("INVALID_USER", e.getMessage());
     }
 
@@ -42,6 +42,11 @@ public class GlobalWsExceptionHandler {
         return new ErrorResponse("ERROR", "알 수 없는 오류가 발생했습니다.");
     }
 
+
+    @MessageExceptionHandler(AccessDeniedException.class)
+    public ErrorResponse handleAccessDenied(BadDestinationException e) {
+        return new ErrorResponse("UNAUTHENTICATED_USER", e.getMessage());
+    }
 
 }
 

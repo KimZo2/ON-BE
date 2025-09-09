@@ -1,7 +1,7 @@
 package com.KimZo2.Back.config;
 
 import com.KimZo2.Back.security.jwt.JwtUtil;
-import com.KimZo2.Back.websocket.AuthChannelInterceptor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -9,13 +9,11 @@ import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
 @EnableWebSocketMessageBroker // 스프링이 WebSocket + STOMP 사용
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtUtil jwtUtil;
-
-    public WebSocketConfig(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
+    private final SubscribeGuard subscribeGuard;
 
     /**
      * 소켓 연결 URL 등록 (endpoint)
@@ -48,7 +46,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new AuthChannelInterceptor(jwtUtil));
+        registration.interceptors(subscribeGuard);
     }
-
-
 }

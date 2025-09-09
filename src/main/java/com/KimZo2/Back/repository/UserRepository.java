@@ -1,6 +1,6 @@
 package com.KimZo2.Back.repository;
 
-import com.KimZo2.Back.entity.User;
+import com.KimZo2.Back.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

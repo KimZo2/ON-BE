@@ -1,13 +1,14 @@
-package com.KimZo2.Back.service.socket;
+package com.KimZo2.Back.service;
 
-import com.KimZo2.Back.entity.Room;
+import com.KimZo2.Back.dto.room.JoinResult;
 import com.KimZo2.Back.exception.ws.BadPasswordException;
-import com.KimZo2.Back.exception.ws.RoomFullException;
 import com.KimZo2.Back.exception.ws.RoomNotFoundOrExpiredException;
+import com.KimZo2.Back.model.Room;
 import com.KimZo2.Back.repository.RoomRepository;
-import com.KimZo2.Back.repository.redis.RedisFunction;
-import com.KimZo2.Back.repository.redis.RoomJoinScript;
+import com.KimZo2.Back.repository.redis.JoinRepository;
+import com.KimZo2.Back.repository.redis.RoomFunctionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,38 +19,32 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SocketService {
-    private final RedisFunction redisFunction;
-    private final RoomJoinScript roomJoinScript;
+    private final RoomFunctionRepository roomFunctionRepository;
     private final RoomRepository roomRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JoinRepository joinRepository;
+
+    // 세션 단위 생존 시간 TTL
+    @Value("${app.room.session.presence-ttl-seconds:120}") private int presenceTtlSec;
+    // 유저가 어느 방에 속해 있는 역참조
+    @Value("${app.room.session.userroom-ttl-seconds:360}") private int userRoomTtlSec;
 
     // 방 입장
-    public void checkRoom(UUID roomId, String principalName, String roomPW ) {
-        UUID userId = UUID.fromString(principalName);
-        String roomKey = "room:" + roomId;
+    public void checkRoom(UUID roomId, String roomPW ) {
 
         // 방 ID를 기준으로 방 찾기
-        if (!redisFunction.roomHasKey(roomKey)) {
+        if (!roomFunctionRepository.roomExists(roomId)) {
             throw new RoomNotFoundOrExpiredException("방이 존재하지 않거나 만료되었습니다.");
         }
 
         // 만약 방이 private이라면 비밀번호 요구  -> PostGre에서 검증하기
-        if (redisFunction.rommIsPrivate(roomKey)) {
+        if (roomFunctionRepository.roomIsPrivate(roomId)) {
             checekPassword(roomPW, roomId);
         }
-
-        // 현재 방의 인원이 가득 찼는지 확인
-        long now = System.currentTimeMillis();
-        long r = roomJoinScript.tryJoin(roomId, userId, now);
-        if (r == -1) throw new RoomNotFoundOrExpiredException("방이 존재하지 않거나 만료되었습니다.");
-        if (r == -2) throw new RoomFullException("정원이 가득 찼습니다.");
-
-        // 인원 추가 로직
     }
 
-
     // 방 비밀번호 조회
-    public void checekPassword(String roomPW, UUID roomId) {
+    private void checekPassword(String roomPW, UUID roomId) {
         if (roomPW == null || roomPW.isBlank()) {
             throw new BadPasswordException("비밀번호가 필요합니다.");
         }
@@ -68,5 +63,14 @@ public class SocketService {
         if (hash == null || !passwordEncoder.matches(roomPW, hash)) {
             throw new BadPasswordException("비밀번호가 올바르지 않습니다.");
         }
+    }
+
+    // 방 입장 로직
+    public JoinResult joinRoom(UUID roomId, UUID userId, String sessionId) {
+        long nowMs = System.currentTimeMillis();
+        // 방 입장
+        JoinResult result = joinRepository.join(roomId, userId, sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
+
+        return result;
     }
 }

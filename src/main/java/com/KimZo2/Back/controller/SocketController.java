@@ -1,10 +1,12 @@
 package com.KimZo2.Back.controller;
 
+import com.KimZo2.Back.dto.room.JoinResult;
 import com.KimZo2.Back.dto.room.RoomEnterDTO;
 import com.KimZo2.Back.dto.room.RoomEnterResponseDTO;
-import com.KimZo2.Back.service.socket.SocketService;
+import com.KimZo2.Back.service.SocketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -20,13 +22,44 @@ public class SocketController {
     private final SocketService socketService;
 
     @MessageMapping("/room/{roomId}/join")
-    public void join(@DestinationVariable UUID roomId, @Payload RoomEnterDTO dto, Principal principal){
+    public void joinRoom(@DestinationVariable UUID roomId,
+                     @Payload RoomEnterDTO dto,
+                     Principal principal,
+                     @Header("simpSessionId") String sessionId){
 
-        socketService.checkRoom(roomId, principal.getName(), dto.getPassword());
+        UUID userId = UUID.fromString(principal.getName());
 
-        // 채널에 구독하고 있는 사용자 중 특정 사용자에게 메시지 전송
-        // /user/queue 는 Principal 클라에게만
-        msg.convertAndSendToUser(principal.getName(), "/queue/join", new RoomEnterResponseDTO(roomId, "JOIN_OK"));
+        // 사용자 및 비밀번호 체크
+        socketService.checkRoom(roomId, dto.getPassword());
+
+        // 방 입장 로직
+        JoinResult result = socketService.joinRoom(roomId, userId, sessionId);
+
+        switch (result.status()) {
+            case OK -> {
+                // 브로드캐스트
+                msg.convertAndSend("/topic/room." + roomId,
+                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
+                // 개인 응답
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
+            }
+            case ALREADY -> {
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "ALREADY", result.count()));
+            }
+            case FULL -> {
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "FULL", result.count()));
+            }
+            case CLOSED_OR_NOT_FOUND -> {
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "CLOSED_OR_NOT_FOUND", result.count()));
+            }
+            default -> {
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "ERROR", result.count()));
+            }
+        }
     }
-
 }

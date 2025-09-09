@@ -1,4 +1,4 @@
-package com.KimZo2.Back.websocket;
+package com.KimZo2.Back.config;
 
 import com.KimZo2.Back.security.jwt.JwtUtil;
 import org.springframework.messaging.*;

@@ -21,6 +21,7 @@ import java.util.Map;
 @Tag(name="Room", description = "rooms 생성, 조회 API")
 @RestController
 @Validated
+@RequestMapping("/room")
 @RequiredArgsConstructor
 public class RoomController {
 
@@ -29,7 +30,7 @@ public class RoomController {
     private final RoomService roomService;
 
     // 방 생성
-    @PostMapping("/room")
+    @PostMapping
     @Operation(summary="방 생성", description="RoomCreateDTO로 방을 생성")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "방 생성 성공"),
@@ -47,7 +48,7 @@ public class RoomController {
     }
 
     // public 방 조회
-    @GetMapping("/room")
+    @GetMapping
     @Operation(summary="방 List 조회", description="page, size를 통해 방 리스트 반환")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),

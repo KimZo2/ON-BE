@@ -3,16 +3,16 @@ package com.KimZo2.Back.service;
 import com.KimZo2.Back.dto.room.RoomCreateDTO;
 import com.KimZo2.Back.dto.room.RoomListItemResponse;
 import com.KimZo2.Back.dto.room.RoomPageResponse;
-import com.KimZo2.Back.entity.Room;
-import com.KimZo2.Back.entity.User;
 import com.KimZo2.Back.exception.login.UserNotFoundException;
 import com.KimZo2.Back.exception.room.DuplicateRoomNameException;
 import com.KimZo2.Back.exception.room.PasswordNotIncludeException;
 import com.KimZo2.Back.exception.room.RoomStoreFailException;
+import com.KimZo2.Back.model.Room;
+import com.KimZo2.Back.model.User;
 import com.KimZo2.Back.repository.RoomRepository;
 import com.KimZo2.Back.repository.UserRepository;
-import com.KimZo2.Back.repository.redis.RedisRoomList;
-import com.KimZo2.Back.repository.redis.RedisRoomStore;
+import com.KimZo2.Back.repository.redis.RoomListRepository;
+import com.KimZo2.Back.repository.redis.RoomStoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +33,8 @@ public class RoomService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoomRepository roomRepository;
-    private final RedisRoomStore redisRoomStore;
-    private final RedisRoomList redisRoomList;
+    private final RoomStoreRepository roomStoreRepository;
+    private final RoomListRepository roomListRepository;
 
     // 방 생성 -> PostGre랑 Redis에 모두 저장 필요
     @Transactional
@@ -80,7 +80,7 @@ public class RoomService {
             roomRepository.save(newRoom);
 
             long now = System.currentTimeMillis();
-            redisRoomStore.createRoomRuntime(
+            roomStoreRepository.createRoomRuntime(
                     roomId,
                     dto.getName(),
                     dto.isPrivate(),
@@ -93,16 +93,16 @@ public class RoomService {
 
             return roomId;
         } catch (RoomStoreFailException e) {
-            // Redis 저장 실패 : 이름 락 해제
-            redisRoomStore.releaseNameLock(roomName);
-            redisRoomStore.deleteRoomRuntimeIfPresent(roomId);
+
+            roomStoreRepository.releaseNameLock(roomName);
+            roomStoreRepository.deleteRoomRuntimeIfPresent(roomId);
             throw e;
         }
     }
 
     // 방 이름 중복 조회 -> 현재 방의 상태가 active인 방 중 중복 이름 존재하는지 확인하는 로직
     public boolean validateDuplicatedRoomName(String roomName, UUID roomId, Duration roomTTL) {
-        return redisRoomStore.lockRoomName(roomName, roomId.toString(), roomTTL);
+        return roomStoreRepository.lockRoomName(roomName, roomId.toString(), roomTTL);
     }
 
     // 방 조회
@@ -114,7 +114,7 @@ public class RoomService {
         int s = Math.min(Math.max(size, 1), 6); // 오류 방지를 위해 최대 10개로만
 
         // 전체 public 인덱스 개수
-        long total = redisRoomList.countPublic();
+        long total = roomListRepository.countPublic();
         // 만약 public 방이 0개라면 list 0개 return
         if (total == 0) {
             log.info("RoomService - RoomPageResponse : total == 0");
@@ -127,10 +127,10 @@ public class RoomService {
 
         // 생성 최신순으로 roomId 추출
         long offset = (long) (p - 1) * s;
-        List<String> ids = redisRoomList.findPublicIdsDesc(offset, s);
+        List<String> ids = roomListRepository.findPublicIdsDesc(offset, s);
 
         // 파이프라인으로 Hash 일괄 로드 -> redis와의 RTT 줄이기
-        List<Map<String, String>> hashes = redisRoomList.findRoomsAsHashes(ids);
+        List<Map<String, String>> hashes = roomListRepository.findRoomsAsHashes(ids);
 
         log.info("RoomService - RoomPageResponse : hashes.size() = " + hashes.size());
 
@@ -171,7 +171,7 @@ public class RoomService {
         log.info("RoomService - RoomPageResponse : items.size" + items.size());
 
         // 정합성 보수 -> redis HASH에는 사라졋지만 zset인덱스에는 남아있음
-        if (!prune.isEmpty()) redisRoomList.removeFromPublicIndex(prune);
+        if (!prune.isEmpty()) roomListRepository.removeFromPublicIndex(prune);
 
         boolean hasNext = p < totalPages;
         return new RoomPageResponse(p, s, items.size(), hasNext, items);

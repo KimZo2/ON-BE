@@ -2,7 +2,7 @@ package com.KimZo2.Back.service;
 
 import com.KimZo2.Back.dto.auth.*;
 import com.KimZo2.Back.dto.member.LoginResponseDTO;
-import com.KimZo2.Back.entity.User;
+import com.KimZo2.Back.model.User;
 import com.KimZo2.Back.exception.login.AdditionalSignupRequiredException;
 import com.KimZo2.Back.repository.UserRepository;
 import com.KimZo2.Back.security.jwt.JwtUtil;

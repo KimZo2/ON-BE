@@ -1,5 +1,6 @@
 package com.KimZo2.Back.repository.redis;
 
+import com.KimZo2.Back.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +17,9 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class RedisRoomStore {
-    private static final Logger log = LoggerFactory.getLogger(RedisRoomStore.class);
+public class RoomStoreRepositoryImpl implements RoomStoreRepository {
+    private static final Logger log = LoggerFactory.getLogger(RoomStoreRepositoryImpl.class);
+
 
     private final StringRedisTemplate redisTemplate;
 
@@ -25,17 +27,19 @@ public class RedisRoomStore {
      * 방 이름이 겹치지 않도록 잠금 역할을 하는 키
      * setIfAbsent = SETNX (=key가 없을 때만 세팅)
      */
+    @Override
     public boolean lockRoomName(String roomName, String roomId, Duration roomTTL) {
         String key = "roomName:" + roomName;
         Boolean ok = redisTemplate.opsForValue().setIfAbsent(key, roomId, roomTTL);
         return Boolean.TRUE.equals(ok);
     }
 
+    @Override
     public void createRoomRuntime(UUID roomId, String roomName, boolean isPrivate, UUID creatorId, int max, int roomType, Duration ttl, long nowMs) {
         String id = roomId.toString();
 
         redisTemplate.executePipelined((RedisCallback<Object>) con -> {
-            String base = "room:" + id;
+            String base = "rooms:" + id;
 
             Map<byte[], byte[]> map = new HashMap<>();
             map.put(b("roomName"), b(roomName));
@@ -57,6 +61,8 @@ public class RedisRoomStore {
 
             con.expire(b(base), ttl.toSeconds());
 
+            con.zAdd(b("rooms:hot"),nowMs, b(id));
+
             // 방 목록 조회 인덱스 생성
             if (!isPrivate) {
                 con.zAdd(b("rooms:public"), nowMs, b(id));
@@ -66,12 +72,14 @@ public class RedisRoomStore {
         });
     }
 
+    @Override
     public void releaseNameLock(String roomName) {
         redisTemplate.delete("roomName:" + roomName);
     }
 
+    @Override
     public void deleteRoomRuntimeIfPresent(UUID roomId) {
-        String key = "room:" + roomId;
+        String key = KeyFactory.roomMeta(roomId);
 
         try {
             Boolean exists = redisTemplate.hasKey(key);

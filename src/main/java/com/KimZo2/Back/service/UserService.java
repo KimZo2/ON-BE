@@ -1,6 +1,6 @@
 package com.KimZo2.Back.service;
 
-import com.KimZo2.Back.entity.User;
+import com.KimZo2.Back.model.User;
 import com.KimZo2.Back.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
