@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,9 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
+    @Value("${jwt.expiration_time}")
+    private int tokenExpireTime;
 
     private final KakaoUtil kakaoUtil;
     private final NaverUtil naverUtil;
@@ -105,10 +109,11 @@ public class AuthService {
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
 
-
             String token = jwtUtil.createAccessToken(user.getId().toString(), user.getNickname(), user.getProvider());
+            long nowMills = System.currentTimeMillis() + tokenExpireTime * 1000L;
+
             response.setHeader("Authorization", token);
-            return new LoginResponseDTO(token, user.getNickname());
+            return new LoginResponseDTO(token, nowMills, user.getNickname());
         } else {
             throw new AdditionalSignupRequiredException(provider, providerId);
         }
