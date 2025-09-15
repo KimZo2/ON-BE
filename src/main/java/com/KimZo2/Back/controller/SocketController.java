@@ -38,7 +38,7 @@ public class SocketController {
         switch (result.status()) {
             case OK -> {
                 // 브로드캐스트
-                msg.convertAndSend("/topic/room." + roomId,
+                msg.convertAndSend("/topic/room." + roomId + "/msg",
                         new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
                 // 개인 응답
                 msg.convertAndSendToUser(userId.toString(), "/queue/join",
