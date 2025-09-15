@@ -1,5 +1,6 @@
 package com.KimZo2.Back.repository.redis;
 
+import com.KimZo2.Back.dto.room.RoomPosResponseDTO;
 import com.KimZo2.Back.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -18,7 +19,7 @@ public class PositionRepositoryImpl implements PositionRepository{
     private final DefaultRedisScript<List> userMoveLua;
 
     @Override
-    public MoveResult userMoveLogic(UUID roomId, UUID userId, String sessionId, double x, double y, long ts, long seq, int presenceTtlSec) {
+    public MoveResult userMoveLogic(UUID roomId, UUID userId, String sessionId, double x, double y, long ts, long seq, int presenceTtlSec, String direction, boolean isMoving) {
         List<String> keys = List.of(
                 KeyFactory.roomMembers(roomId),
                 KeyFactory.presence(roomId, userId, sessionId),
@@ -32,7 +33,9 @@ public class PositionRepositoryImpl implements PositionRepository{
                 String.valueOf(ts),
                 String.valueOf(seq),
                 String.valueOf(presenceTtlSec),
-                roomId.toString()
+                roomId.toString(),
+                direction,
+                Boolean.toString(isMoving)
         );
 
         @SuppressWarnings("unchecked")
@@ -45,15 +48,25 @@ public class PositionRepositoryImpl implements PositionRepository{
 
 
     @Override
-    public List<String> loadAll(UUID roomId) {
+    public List<RoomPosResponseDTO> loadAll(UUID roomId) {
         Map<Object,Object> m = redisTemplate.opsForHash().entries(KeyFactory.roomPos(roomId));
-        List<String> out = new ArrayList<>(m.size());
-        m.forEach((k,v) -> {
-            String userId = String.valueOf(k);
-            String pos = String.valueOf(v); // "x,y,ts,seq"
-            out.add(userId + ":" + pos);   // => "userId:x,y,ts,seq"
+        List<RoomPosResponseDTO> out = new ArrayList<>(m.size());
+
+        m.forEach((k, v) -> {
+            UUID userId = UUID.fromString(String.valueOf(k));
+            String[] parts = String.valueOf(v).split(",", 6);
+
+            double x = Double.parseDouble(parts[0]);
+            double y = Double.parseDouble(parts[1]);
+            long seq = Long.parseLong(parts[3]);
+            String direction = parts[4];
+            boolean isMoving = Boolean.parseBoolean(parts[5]);
+
+            out.add(new RoomPosResponseDTO(userId, x, y, seq, direction, isMoving));
         });
+
         return out;
     }
+
 
 }

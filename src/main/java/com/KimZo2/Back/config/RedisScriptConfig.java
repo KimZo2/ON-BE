@@ -108,6 +108,8 @@ public class RedisScriptConfig {
     -- 6: seq (client monotonic)
     -- 7: presenceTtlSec
     -- 8: roomId
+    -- 9: direction
+    -- 10: isMoving
 
     local userId   = ARGV[1]
     local session  = ARGV[2]
@@ -116,6 +118,9 @@ public class RedisScriptConfig {
     local ts       = tonumber(ARGV[5])
     local seq      = tonumber(ARGV[6])
     local ttl      = tonumber(ARGV[7])
+    local direction = ARGV[9]
+    local isMoving  = ARGV[10] or "false"
+    
 
     -- 1) member check
     if redis.call('SISMEMBER', KEYS[1], userId) == 0 then
@@ -129,7 +134,7 @@ public class RedisScriptConfig {
     local field = userId
     local old = redis.call('HGET', KEYS[3], field)
     if old then
-        -- old format: "x,y,ts,seq"
+        -- old format: "x,y,ts,seq,direction,isMoving"
         local parts = {}
         for v in string.gmatch(old, '([^,]+)') do table.insert(parts, v) end
         local oldSeq = tonumber(parts[4]) or -1
@@ -143,7 +148,7 @@ public class RedisScriptConfig {
         end
     end
 
-    local value = x .. ',' .. y .. ',' .. tostring(ts) .. ',' .. tostring(seq)
+    local value = x .. ',' .. y .. ',' .. tostring(ts) .. ',' .. tostring(seq) .. ',' .. direction .. ',' .. isMoving
     redis.call('HSET', KEYS[3], field, value)
 
     -- 4) update seen

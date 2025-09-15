@@ -1,5 +1,6 @@
 package com.KimZo2.Back.repository.redis;
 
+import com.KimZo2.Back.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,13 +18,12 @@ public class RoomListRepositoryImpl implements RoomListRepository {
 
     private final StringRedisTemplate redis;
 
-    private static final String Z_PUBLIC = "rooms:public";
     private static final String H_PREFIX = "room:";
 
     @Override
     // 전체 public 페이지 수 찾기
     public long countPublic() {
-        return Optional.ofNullable(redis.opsForZSet().zCard(Z_PUBLIC)).orElse(0L);
+        return Optional.ofNullable(redis.opsForZSet().zCard(KeyFactory.roomPublic())).orElse(0L);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class RoomListRepositoryImpl implements RoomListRepository {
         if (limit <= 0) return List.of();
         long start = offset;
         long stop  = offset + limit - 1;
-        Set<String> set = redis.opsForZSet().reverseRange(Z_PUBLIC, start, stop);
+        Set<String> set = redis.opsForZSet().reverseRange(KeyFactory.roomPublic(), start, stop);
         return (set == null) ? List.of() : new ArrayList<>(set); // 순서 유지
     }
 
@@ -71,6 +71,6 @@ public class RoomListRepositoryImpl implements RoomListRepository {
     @Override
     public void removeFromPublicIndex(Collection<String> ids) {
         if (ids == null || ids.isEmpty()) return;
-        redis.opsForZSet().remove(Z_PUBLIC, ids.toArray());
+        redis.opsForZSet().remove(KeyFactory.roomPublic(), ids.toArray());
     }
 }

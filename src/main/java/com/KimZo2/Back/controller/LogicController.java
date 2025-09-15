@@ -23,7 +23,7 @@ public class LogicController {
     private final LogicService logicService;
 
     // 방 단위 Ping (Presence 유지)
-    @MessageMapping("room/{roomId}.ping")
+    @MessageMapping("room/{roomId}/ping")
     public void userPing(@DestinationVariable UUID roomId, Principal principal,
                          @Header(name = "simpSessionId") String sessionId,
                          @Payload(required = false) PingRequest ping){
@@ -34,7 +34,7 @@ public class LogicController {
     }
 
     // 좌표 이동
-    @MessageMapping("room/{roomId}.move")
+    @MessageMapping("room/{roomId}/move")
     public void userCoordinate(@DestinationVariable UUID roomId, Principal principal,
                      @Header(name = "simpSessionId") String sessionId,
                      @Payload MoveCommand cmd) {
@@ -49,7 +49,7 @@ public class LogicController {
     }
 
     // 초기 스냅샷
-    @MessageMapping("room/{roomId}.sync")
+    @MessageMapping("room/{roomId}/sync")
     public void userSYNC(@DestinationVariable UUID roomId, Principal principal) {
         UUID userId = UUID.fromString(principal.getName());
 

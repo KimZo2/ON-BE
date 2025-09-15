@@ -4,6 +4,7 @@ import com.KimZo2.Back.dto.logic.LogicCode;
 import com.KimZo2.Back.dto.logic.MoveAck;
 import com.KimZo2.Back.dto.logic.MoveCommand;
 import com.KimZo2.Back.dto.logic.Snapshot;
+import com.KimZo2.Back.dto.room.RoomPosResponseDTO;
 import com.KimZo2.Back.repository.redis.PositionRepository;
 import com.KimZo2.Back.repository.redis.PresenceRepository;
 import com.KimZo2.Back.repository.redis.RateLimitRepository;
@@ -45,7 +46,7 @@ public class LogicService {
 
     // 배치 브로드캐스트 큐
     // 방 별로 최근 변경된 유저 필드만 누적 -> 주기적으로 방 별 topic 플러시
-    private final Map<UUID, Queue<String>> deltaQueues = new ConcurrentHashMap<>();
+    private final Map<UUID, Queue<RoomPosResponseDTO>> deltaQueues = new ConcurrentHashMap<>();
 
     // 유저 세션 업데이트
     // ping 올 때마다 업데이트
@@ -63,19 +64,21 @@ public class LogicService {
 
         double x = cmd.getX();
         double y = cmd.getY();
+        long seq = cmd.getSeq();
+        String direction = cmd.getDirection();
+        boolean isMoving = cmd.isMoving();
 
         var res = positionRepository.userMoveLogic(
                 roomId, userId, sessionId,
                 x, y, now,
                 Optional.ofNullable(cmd.getSeq()).orElse(0L),
-                presenceTtlSec
+                presenceTtlSec, direction, isMoving
         );
 
         if ("NOT_MEMBER".equals(res.status())) return ack(false, LogicCode.valueOf("NOT_MEMBER"), cmd.getSeq(), now);
         if ("STALE".equals(res.status()))     return ack(false, LogicCode.valueOf("STALE"),     res.seq(), now);
 
-        String packed = userId + ":" + x + "," + y + "," + now;
-        deltaQueues.computeIfAbsent(roomId, k -> new ConcurrentLinkedQueue<>()).offer(packed);
+        deltaQueues.computeIfAbsent(roomId, k -> new ConcurrentLinkedQueue<>()).offer(new RoomPosResponseDTO(userId,x,y,seq,direction,isMoving));
         return ack(true, LogicCode.valueOf("OK"), cmd.getSeq(), now);
     }
 
@@ -117,7 +120,7 @@ public class LogicService {
             var s = new Snapshot();
             s.setPositions(positions);
             s.setServerTs(System.currentTimeMillis());
-            msg.convertAndSend("/topic/room/" + roomId + ".pos-snapshot", s);
+            msg.convertAndSend("/topic/room/" + roomId + "/pos-snapshot", s);
         }
     }
 
@@ -125,10 +128,10 @@ public class LogicService {
     public void flushBatches() {
         for (var e : deltaQueues.entrySet()) {
             UUID roomId = e.getKey();
-            Queue<String> q = e.getValue();
+            Queue<RoomPosResponseDTO> q = e.getValue();
             if (q.isEmpty()) continue;
 
-            List<String> updates = new ArrayList<>(64);
+            List<RoomPosResponseDTO> updates = new ArrayList<>(64);
             while (!q.isEmpty() && updates.size() < 512) updates.add(q.poll());
 
             if (!updates.isEmpty()) {

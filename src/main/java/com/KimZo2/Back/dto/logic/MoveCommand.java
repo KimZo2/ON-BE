@@ -15,8 +15,12 @@ public class MoveCommand {
     private Double y;
 
     // 순서/동기화
-    private Long seq;        // 클라 증가 시퀀스(필수)
-    private Long clientTs;   // 선택
+    private Long seq;
+
+    // 방향 : "up" , "down" , "left" , "right"
+    private String direction;
+
+    private boolean isMoving;
 
     /**
      * 기본 형식 검증: (x,y) 또는 (dx,dy) 중 하나는 필수, NaN 금지, seq >= 0
