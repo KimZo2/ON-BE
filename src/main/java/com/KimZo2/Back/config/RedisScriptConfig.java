@@ -71,14 +71,13 @@ public class RedisScriptConfig {
 
             -- 입장 처리 (원자)
             redis.call('SADD', membersKey, uid)
-            redis.call('HINCRBY', metaKey, 'roomCurrentPersonCnt', 1)
+            local newCur = redis.call('HINCRBY', metaKey, 'roomCurrentPersonCnt', 1)
             redis.call('SET', presence, '1', 'EX', pttl)
             local rid = string.match(metaKey, 'room:(.+)$')
             if rid then
                 redis.call('SET', userRoom, rid, 'EX', urttl)
                 redis.call('ZADD', hotKey, nowMs, rid)
             end
-            local newCur = tonumber(redis.call('HGET', metaKey, 'roomCurrentPersonCnt') or '0')
 
             -- 피크 업데이트(옵션) - 방 동시 접속 최대치
             -- local peak = tonumber(redis.call('HGET', metaKey, 'peak') or '0')
@@ -118,6 +117,7 @@ public class RedisScriptConfig {
     local ts       = tonumber(ARGV[5])
     local seq      = tonumber(ARGV[6])
     local ttl      = tonumber(ARGV[7])
+    local roomId    = ARGV[8]
     local direction = ARGV[9]
     local isMoving  = ARGV[10] or "false"
     
@@ -166,6 +166,4 @@ public class RedisScriptConfig {
         lua.setResultType(List.class);
         return lua;
     }
-
-
 }

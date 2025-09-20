@@ -28,8 +28,10 @@ public class PositionRepositoryImpl implements PositionRepository{
                 KeyFactory.roomHot()
         );
         List<String> argv = List.of(
-                String.valueOf(userId), sessionId,
-                String.valueOf(x), String.valueOf(y),
+                String.valueOf(userId),
+                sessionId,
+                String.valueOf(x),
+                String.valueOf(y),
                 String.valueOf(ts),
                 String.valueOf(seq),
                 String.valueOf(presenceTtlSec),
