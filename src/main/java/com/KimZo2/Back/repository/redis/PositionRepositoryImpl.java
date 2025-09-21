@@ -44,8 +44,7 @@ public class PositionRepositoryImpl implements PositionRepository{
         List<Object> res = (List<Object>)(List<?>) redisTemplate.execute(userMoveLua, keys, argv.toArray());
         String status = String.valueOf(res.get(0));
         long appliedSeq = Long.parseLong(String.valueOf(res.get(1)));
-        long ver = Long.parseLong(String.valueOf(res.get(2)));
-        return new MoveResult(status, appliedSeq, ver);
+        return new MoveResult(status, appliedSeq);
     }
 
 

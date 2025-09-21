@@ -15,5 +15,5 @@ public interface PositionRepository {
 
 //    Long currentVersion(UUID roomId);
 
-    record MoveResult(String status, long seq, long version) {}
+    record MoveResult(String status, long seq) {}
 }
