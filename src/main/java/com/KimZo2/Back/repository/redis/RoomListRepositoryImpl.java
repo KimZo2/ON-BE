@@ -18,7 +18,7 @@ public class RoomListRepositoryImpl implements RoomListRepository {
 
     private final StringRedisTemplate redis;
 
-    private static final String H_PREFIX = "room:";
+    private static final String H_PREFIX = "rooms:";
 
     @Override
     // 전체 public 페이지 수 찾기
