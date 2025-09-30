@@ -93,10 +93,10 @@ public class RoomService {
 
             return roomId;
         } catch (RoomStoreFailException e) {
-
             roomStoreRepository.releaseNameLock(roomName);
             roomStoreRepository.deleteRoomRuntimeIfPresent(roomId);
-            throw e;
+            log.error("Failed to create room with name '{}'", roomName, e);
+            throw new RoomStoreFailException("방 생성에 실패했습니다.");
         }
     }
 
@@ -111,7 +111,7 @@ public class RoomService {
 
         // page와 size 정규화
         int p = Math.max(page, 1);
-        int s = Math.min(Math.max(size, 1), 6); // 오류 방지를 위해 최대 10개로만
+        int s = Math.min(Math.max(size, 1), 6); // 오류 방지를 위해 최대 6개로만
 
         // 전체 public 인덱스 개수
         long total = roomListRepository.countPublic();
