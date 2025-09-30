@@ -39,12 +39,12 @@ public class SocketService {
 
         // 만약 방이 private이라면 비밀번호 요구  -> PostGre에서 검증하기
         if (roomFunctionRepository.roomIsPrivate(roomId)) {
-            checekPassword(roomPW, roomId);
+            checkPassword(roomPW, roomId);
         }
     }
 
     // 방 비밀번호 조회
-    private void checekPassword(String roomPW, UUID roomId) {
+    private void checkPassword(String roomPW, UUID roomId) {
         if (roomPW == null || roomPW.isBlank()) {
             throw new BadPasswordException("비밀번호가 필요합니다.");
         }
