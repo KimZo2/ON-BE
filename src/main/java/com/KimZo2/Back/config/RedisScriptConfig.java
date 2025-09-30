@@ -53,7 +53,7 @@ public class RedisScriptConfig {
             -- 이미 멤버면 TTL만 갱신
             if redis.call('SISMEMBER', membersKey, uid) == 1 then
               redis.call('SET', presence, '1', 'EX', pttl)
-              local rid = string.match(metaKey, 'room:(.+)$')
+              local rid = string.match(metaKey, 'rooms:(.+)$')
               if rid then
                 redis.call('SET', userRoom, rid, 'EX', urttl)
                 redis.call('ZADD', hotKey, nowMs, rid)
