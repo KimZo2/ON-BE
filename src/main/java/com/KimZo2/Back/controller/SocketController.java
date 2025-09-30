@@ -44,22 +44,9 @@ public class SocketController {
                 msg.convertAndSendToUser(userId.toString(), "/queue/join",
                         new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
             }
-            case ALREADY -> {
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "ALREADY", result.count()));
-            }
-            case FULL -> {
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "FULL", result.count()));
-            }
-            case CLOSED_OR_NOT_FOUND -> {
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "CLOSED_OR_NOT_FOUND", result.count()));
-            }
-            default -> {
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "ERROR", result.count()));
-            }
+            case ALREADY, FULL, CLOSED_OR_NOT_FOUND, ERROR ->
+                    msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                            new RoomEnterResponseDTO(roomId, result.status().name(), result.count()));
         }
     }
 }
