@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class SubscribeGuard implements ChannelInterceptor {
 
-    private static MembersRepository membersRepository;
+    private final MembersRepository membersRepository;
 
     private static final Pattern ROOM_TOPIC =
             Pattern.compile("^/topic/room\\.([^.]+)(?:\\..+)?$");
