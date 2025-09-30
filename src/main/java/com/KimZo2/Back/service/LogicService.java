@@ -60,7 +60,7 @@ public class LogicService {
 
         // 요청 빈도 제한 -> 5초 안에 50번 요청 하면 비정상 요청 처리
         long c = rateRepository.incrWithWindow(KeyFactory.moveRate(roomId, userId), moveWindowSec);
-        if (c > moveMaxPerWindow) return ack(false, LogicCode.valueOf("RATE_LIMIT"), cmd.getSeq(), now);
+        if (c > moveMaxPerWindow) return ack(false, LogicCode.RATE_LIMIT, cmd.getSeq(), now);
 
         double x = cmd.getX();
         double y = cmd.getY();
