@@ -23,7 +23,7 @@ public class CustomUserDetails implements UserDetails {
         this.id = user.getId();
         this.nickname = user.getNickname();
         this.provider = user.getProviderId();
-        this.username = null;
+        this.username = user.getId().toString();
         this.password = null;
     }
 
