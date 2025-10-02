@@ -1,6 +1,7 @@
 package com.KimZo2.Back.service;
 
 import com.KimZo2.Back.dto.room.JoinResult;
+import com.KimZo2.Back.dto.room.RoomEnterResponseDTO;
 import com.KimZo2.Back.exception.ws.BadPasswordException;
 import com.KimZo2.Back.exception.ws.RoomNotFoundOrExpiredException;
 import com.KimZo2.Back.model.Room;
@@ -9,6 +10,7 @@ import com.KimZo2.Back.repository.redis.JoinRepository;
 import com.KimZo2.Back.repository.redis.RoomFunctionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,8 @@ public class SocketService {
     private final RoomRepository roomRepository;
     private final PasswordEncoder passwordEncoder;
     private final JoinRepository joinRepository;
+
+    private final SimpMessagingTemplate msg;
 
     // 세션 단위 생존 시간 TTL
     @Value("${app.room.session.presence-ttl-seconds:120}") private int presenceTtlSec;
@@ -66,11 +70,36 @@ public class SocketService {
     }
 
     // 방 입장 로직
-    public JoinResult joinRoom(UUID roomId, UUID userId, String sessionId) {
+    public void joinRoom(UUID roomId, UUID userId, String sessionId) {
         long nowMs = System.currentTimeMillis();
         // 방 입장
         JoinResult result = joinRepository.join(roomId, userId, sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
 
-        return result;
+        switch (result.status()) {
+            case OK -> {
+                // 브로드캐스트
+                msg.convertAndSend("/topic/room." + roomId + "/msg",
+                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
+                // 개인 응답
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
+            }
+            case ALREADY -> {
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "ALREADY", result.count()));
+            }
+            case FULL -> {
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "FULL", result.count()));
+            }
+            case CLOSED_OR_NOT_FOUND -> {
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "CLOSED_OR_NOT_FOUND", result.count()));
+            }
+            default -> {
+                msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "ERROR", result.count()));
+            }
+        }
     }
 }

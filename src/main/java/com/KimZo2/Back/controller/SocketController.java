@@ -18,14 +18,13 @@ import java.util.UUID;
 @Controller
 @RequiredArgsConstructor
 public class SocketController {
-    private final SimpMessagingTemplate msg;
     private final SocketService socketService;
 
     @MessageMapping("/room/{roomId}/join")
     public void joinRoom(@DestinationVariable UUID roomId,
-                     @Payload RoomEnterDTO dto,
-                     Principal principal,
-                     @Header("simpSessionId") String sessionId){
+                         @Payload RoomEnterDTO dto,
+                         Principal principal,
+                         @Header("simpSessionId") String sessionId){
 
         UUID userId = UUID.fromString(principal.getName());
 
@@ -33,20 +32,6 @@ public class SocketController {
         socketService.checkRoom(roomId, dto.getPassword());
 
         // 방 입장 로직
-        JoinResult result = socketService.joinRoom(roomId, userId, sessionId);
-
-        switch (result.status()) {
-            case OK -> {
-                // 브로드캐스트
-                msg.convertAndSend("/topic/room." + roomId + "/msg",
-                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
-                // 개인 응답
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
-            }
-            case ALREADY, FULL, CLOSED_OR_NOT_FOUND, ERROR ->
-                    msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                            new RoomEnterResponseDTO(roomId, result.status().name(), result.count()));
-        }
+        socketService.joinRoom(roomId, userId, sessionId);
     }
 }

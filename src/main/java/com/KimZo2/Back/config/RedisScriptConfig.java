@@ -10,6 +10,95 @@ import java.util.List;
 public class RedisScriptConfig {
 
     @Bean
+    public DefaultRedisScript<Long> createRoomLua() {
+        String script = """
+            -- KEYS:
+            -- 1: rooms:{roomId}            (메타 데이터 Hash)
+            -- 2: rooms:{roomId}:members    (멤버 Set)
+            -- 3: rooms:{roomId}:pos        (위치 Hash)
+            -- 4: rooms:{roomId}:seen       (마지막 활동 Sorted Set)
+            -- 5: rooms:active_list         (전체 활성 방 Set)
+            -- 6: rooms:hot                 (인기 방 Sorted Set)
+            -- 7: rooms:public              (공개 방 Sorted Set)
+            --
+            -- ARGV:
+            -- 1: roomId
+            -- 2: roomName
+            -- 3: visibility ("1" for private, "0" for public)
+            -- 4: creatorId
+            -- 5: maxPersonCnt
+            -- 6: roomType (background img)
+            -- 7: ttlSec
+            -- 8: nowMs (timestamp)
+            --
+            -- 반환: 1 (성공), 0 (이미 존재하여 실패)
+
+            local metaKey       = KEYS[1]
+            local membersKey    = KEYS[2]
+            local posKey        = KEYS[3]
+            local seenKey       = KEYS[4]
+            local activeListKey = KEYS[5]
+            local hotKey        = KEYS[6]
+            local publicIdxKey  = KEYS[7]
+
+            local roomId        = ARGV[1]
+            local roomName      = ARGV[2]
+            local visibility    = ARGV[3]
+            local creatorId     = ARGV[4]
+            local maxPerson     = ARGV[5]
+            local roomType      = ARGV[6]
+            local ttl           = tonumber(ARGV[7])
+            local nowMs         = tonumber(ARGV[8])
+
+            -- 1. 방이 이미 존재하는지 확인하여 중복 생성 방지
+            if redis.call('EXISTS', metaKey) == 1 then
+                return 0
+            end
+
+            -- 2. 방 메타 데이터 생성
+            redis.call('HSET', metaKey,
+                'roomName', roomName,
+                'visibility', visibility,
+                'roomBackgroundImg', roomType,
+                'roomMaximumPersonCnt', maxPerson,
+                'roomCurrentPersonCnt', 0,
+                'peak', 0,
+                'creatorId', creatorId,
+                'createdAtMs', nowMs,
+                'lastActiveMs', nowMs,
+                'ttlSec', ttl,
+                'state', 'CREATED',
+                'active', 'true'
+            )
+
+            -- 3. 데이터 정합성을 위해 관련된 모든 키에 동일한 TTL 설정
+            -- EXPIRE는 키가 존재할 때만 동작하므로,
+            -- members, pos, seen 키를 빈 상태로라도 미리 생성해줘야 함.
+            redis.call('SADD', membersKey, 'init')
+            redis.call('HDEL', membersKey, 'init') -- 빈 Set으로 생성
+            
+            redis.call('EXPIRE', metaKey, ttl)
+            redis.call('EXPIRE', membersKey, ttl)
+            redis.call('EXPIRE', posKey, ttl)
+            redis.call('EXPIRE', seenKey, ttl)
+
+            -- 4. 전체 방 목록 및 인덱스에 추가
+            redis.call('SADD', activeListKey, roomId)
+            redis.call('ZADD', hotKey, nowMs, roomId)
+
+            if visibility == '0' then -- 공개 방일 경우
+                redis.call('ZADD', publicIdxKey, nowMs, roomId)
+            end
+
+            return 1
+            """;
+        DefaultRedisScript<Long> lua = new DefaultRedisScript<>();
+        lua.setScriptText(script);
+        lua.setResultType(Long.class);
+        return lua;
+    }
+
+    @Bean
     public DefaultRedisScript<List> joinRoomLua() {
         DefaultRedisScript<List> script = new DefaultRedisScript<>();
         script.setResultType(List.class);
@@ -164,6 +253,53 @@ public class RedisScriptConfig {
         DefaultRedisScript<List> lua = new DefaultRedisScript<>();
         lua.setScriptText(script);
         lua.setResultType(List.class);
+        return lua;
+    }
+
+    // RedisConfig.java
+
+    @Bean
+    public DefaultRedisScript<Long> cleanupUserLua() {
+        String script = """
+        -- KEYS:
+        -- 1: rooms:{roomId}:members       (멤버 SET)
+        -- 2: rooms:{roomId}:pos           (위치 HASH)
+        -- 3: rooms:{roomId}               (메타 HASH)
+        -- 4: rooms:{roomId}:seen          (마지막 활동 Sorted Set)
+        -- 5: users:{userId}:rooms         (유저-방 역참조 STRING)
+        -- 6: rate:move:{roomId}:{userId}  (이동 빈도 제한 STRING)
+        --
+        -- ARGV:
+        -- 1: userId
+        --
+        -- 반환: 1 (정리 성공), 0 (이미 없어서 정리 안함)
+
+        local membersKey = KEYS[1]
+        local posKey     = KEYS[2]
+        local metaKey    = KEYS[3]
+        local seenKey    = KEYS[4]
+        local userRoomKey= KEYS[5]
+        local moveRateKey= KEYS[6]
+        local uid        = ARGV[1]
+
+        if redis.call('SREM', membersKey, uid) == 1 then
+            -- 기존 정리 로직
+            redis.call('HDEL', posKey, uid)
+            redis.call('HINCRBY', metaKey, 'roomCurrentPersonCnt', -1)
+            redis.call('ZREM', seenKey, uid)
+            
+            -- 추가된 키 정리 로직
+            redis.call('DEL', userRoomKey)
+            redis.call('DEL', moveRateKey)
+
+            return 1
+        end
+
+        return 0
+    """;
+        DefaultRedisScript<Long> lua = new DefaultRedisScript<>();
+        lua.setScriptText(script);
+        lua.setResultType(Long.class);
         return lua;
     }
 }
