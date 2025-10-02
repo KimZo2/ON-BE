@@ -45,8 +45,8 @@ public class LogicService {
 
 
     // 배치 브로드캐스트 큐
-    // 방 별로 최근 변경된 유저 필드만 누적 -> 주기적으로 방 별 topic 플러시
-    private final Map<UUID, Queue<RoomPosResponseDTO>> deltaQueues = new ConcurrentHashMap<>();
+    // Map<방 ID, Map<유저 ID, 최종 좌표 객체>>
+    private final Map<UUID, Map<UUID, RoomPosResponseDTO>> deltaMaps = new ConcurrentHashMap<>();
 
     // 유저 세션 업데이트
     // ping 올 때마다 업데이트
@@ -76,9 +76,20 @@ public class LogicService {
         );
 
         if ("NOT_MEMBER".equals(res.status())) return ack(false, LogicCode.valueOf("NOT_MEMBER"), cmd.getSeq(), now);
-        if ("STALE".equals(res.status()))     return ack(false, LogicCode.valueOf("STALE"),     res.seq(), now);
+//        if ("STALE".equals(res.status()))     return ack(false, LogicCode.valueOf("STALE"),     res.seq(), now);
 
-        deltaQueues.computeIfAbsent(roomId, k -> new ConcurrentLinkedQueue<>()).offer(new RoomPosResponseDTO(userId,x,y,seq,direction,isMoving));
+        // 맵을 가져오거나 새로 생성
+        Map<UUID, RoomPosResponseDTO> roomUpdates = deltaMaps.computeIfAbsent(
+                roomId,
+                k -> new ConcurrentHashMap<>()
+        );
+
+        // 유저 ID를 키로 최종 좌표를 덮어씌우기
+        roomUpdates.put(
+                userId,
+                new RoomPosResponseDTO(userId, x, y, seq, direction, isMoving)
+        );
+
         return ack(true, LogicCode.valueOf("OK"), cmd.getSeq(), now);
     }
 
@@ -126,13 +137,25 @@ public class LogicService {
 
     @Scheduled(fixedDelayString = "#{1000 / (${app.room.broadcast.batch-hz:15})}")
     public void flushBatches() {
-        for (var e : deltaQueues.entrySet()) {
+        for (var e : deltaMaps.entrySet()) {
             UUID roomId = e.getKey();
-            Queue<RoomPosResponseDTO> q = e.getValue();
-            if (q.isEmpty()) continue;
 
-            List<RoomPosResponseDTO> updates = new ArrayList<>(64);
-            while (!q.isEmpty() && updates.size() < 512) updates.add(q.poll());
+            Map<UUID, RoomPosResponseDTO> updatesMap = e.getValue();
+
+            // 맵에서 모든 업데이트를 가져온 후 맵을 클리어
+            Map<UUID, RoomPosResponseDTO> updatesToSend = new HashMap<>();
+
+            /**
+             * Lock을 사용하기에 안전하지만 lock을 잡는 동안 updatePosition의 스레드들이 멈춰서
+             * 처리율 측면에서는 약간의 성능 저하가 발생할 수도 있다.
+             */
+            synchronized (updatesMap) { // updateMap Lock
+                if (updatesMap.isEmpty()) continue;
+                updatesToSend.putAll(updatesMap);
+                updatesMap.clear();
+            }
+
+            List<RoomPosResponseDTO> updates = new ArrayList<>(updatesToSend.values());
 
             if (!updates.isEmpty()) {
                 Map<String,Object> frame = Map.of("updates", updates, "serverTs", Instant.now().toEpochMilli());
