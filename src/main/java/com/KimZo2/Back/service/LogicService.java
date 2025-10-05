@@ -59,14 +59,14 @@ public class LogicService {
         long now = System.currentTimeMillis();
 
         // 요청 빈도 제한 -> 5초 안에 50번 요청 하면 비정상 요청 처리
-        long c = rateRepository.incrWithWindow(KeyFactory.moveRate(roomId, userId), moveWindowSec);
-        if (c > moveMaxPerWindow) return ack(false, LogicCode.RATE_LIMIT, cmd.getSeq(), now);
+//        long c = rateRepository.incrWithWindow(KeyFactory.moveRate(roomId, userId), moveWindowSec);
+//        if (c > moveMaxPerWindow) return ack(false, LogicCode.RATE_LIMIT, cmd.getSeq(), now);
 
         double x = cmd.getX();
         double y = cmd.getY();
         long seq = cmd.getSeq();
         String direction = cmd.getDirection();
-        boolean isMoving = cmd.isMoving();
+        boolean isMoving = cmd.getIsMoving();
 
         var res = positionRepository.userMoveLogic(
                 roomId, userId, sessionId,
