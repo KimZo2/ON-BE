@@ -279,7 +279,7 @@ public class RedisScriptConfig {
         local metaKey    = KEYS[3]
         local seenKey    = KEYS[4]
         local userRoomKey= KEYS[5]
-        local moveRateKey= KEYS[6]
+        -- local moveRateKey= KEYS[6]
         local uid        = ARGV[1]
 
         if redis.call('SREM', membersKey, uid) == 1 then
@@ -290,7 +290,7 @@ public class RedisScriptConfig {
             
             -- 추가된 키 정리 로직
             redis.call('DEL', userRoomKey)
-            redis.call('DEL', moveRateKey)
+            -- redis.call('DEL', moveRateKey)
 
             return 1
         end
