@@ -10,9 +10,11 @@ public final class KeyFactory {
     public static String roomSeen(UUID r)          { return "rooms:" + r + ":seen"; }
     public static String userRoom(UUID userId)   { return "users:" + userId + ":rooms"; }
     public static String presence(UUID r, UUID u, String s) { return "presence:" + r + ":" + u + ":" + s; }
-    public static String moveRate(UUID r, UUID u) { return "rate:move:" + r + ":" + u; }
+//    public static String moveRate(UUID r, UUID u) { return "rate:move:" + r + ":" + u; }
     public static String roomHot()  {return "rooms:hot";}
+    public static String roomName(String name) {return "roomsName:" + name;}
     public static String roomPublic() {return "rooms:public";}
+    public static String roomActive() {return "rooms:active_list";}
 }
 
 
