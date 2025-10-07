@@ -34,4 +34,13 @@ public class SocketController {
         // 방 입장 로직
         socketService.joinRoom(roomId, userId, sessionId);
     }
+
+    @MessageMapping("/room/{roomId}/leave")
+    public void leaveRoom(@DestinationVariable UUID roomId,
+                          Principal principal,
+                          @Header("simpSessionId") String sessionId){
+        UUID userId = UUID.fromString(principal.getName());
+
+        socketService.leaveRoom(roomId, userId);
+    }
 }
