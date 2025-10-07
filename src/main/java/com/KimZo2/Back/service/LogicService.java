@@ -1,14 +1,8 @@
 package com.KimZo2.Back.service;
 
-import com.KimZo2.Back.dto.logic.LogicCode;
-import com.KimZo2.Back.dto.logic.MoveAck;
-import com.KimZo2.Back.dto.logic.MoveCommand;
-import com.KimZo2.Back.dto.logic.Snapshot;
+import com.KimZo2.Back.dto.logic.*;
 import com.KimZo2.Back.dto.room.RoomPosResponseDTO;
-import com.KimZo2.Back.repository.redis.PositionRepository;
-import com.KimZo2.Back.repository.redis.PresenceRepository;
-import com.KimZo2.Back.repository.redis.RateLimitRepository;
-import com.KimZo2.Back.repository.redis.RoomFunctionRepository;
+import com.KimZo2.Back.repository.redis.*;
 import com.KimZo2.Back.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +25,7 @@ public class LogicService {
     private final PositionRepository positionRepository;
     private final RateLimitRepository rateRepository;
     private final RoomFunctionRepository roomFunctionRepository;
+    private final RoomCleanUpRepositoryImpl roomCleanUpRepository;
 
     private final SimpMessagingTemplate msg;
 
@@ -59,14 +54,14 @@ public class LogicService {
         long now = System.currentTimeMillis();
 
         // 요청 빈도 제한 -> 5초 안에 50번 요청 하면 비정상 요청 처리
-        long c = rateRepository.incrWithWindow(KeyFactory.moveRate(roomId, userId), moveWindowSec);
-        if (c > moveMaxPerWindow) return ack(false, LogicCode.RATE_LIMIT, cmd.getSeq(), now);
+//        long c = rateRepository.incrWithWindow(KeyFactory.moveRate(roomId, userId), moveWindowSec);
+//        if (c > moveMaxPerWindow) return ack(false, LogicCode.RATE_LIMIT, cmd.getSeq(), now);
 
         double x = cmd.getX();
         double y = cmd.getY();
         long seq = cmd.getSeq();
         String direction = cmd.getDirection();
-        boolean isMoving = cmd.isMoving();
+        boolean isMoving = cmd.getIsMoving();
 
         var res = positionRepository.userMoveLogic(
                 roomId, userId, sessionId,
@@ -164,4 +159,35 @@ public class LogicService {
         }
     }
 
+    // 유저 세션 관리
+    @Scheduled(fixedDelay = 120000)
+    public void cleanupExpiredUsers() {
+        Set<String> allRoomIds = roomFunctionRepository.allRoomIds();
+        if (allRoomIds == null || allRoomIds.isEmpty()) {
+            return;
+        }
+
+        for (String roomId : allRoomIds) {
+            Set<String> expiredUserIds = presenceRepository.findExpiredUserInRoom(roomId, presenceTtlSec);
+            if (expiredUserIds.isEmpty()) {
+                continue;
+            }
+            for (String userId : expiredUserIds) {
+                try {
+                    Long result = roomCleanUpRepository.cleanupExpiredUser(UUID.fromString(roomId), userId);
+
+                    // Repository의 결과에 따라 STOMP 메시지 전송
+                    if (result != null && result == 1) {
+                        UserLeaveDTO payload = new UserLeaveDTO(userId, "SESSION_EXPIRED");
+                        String destination = "/topic/room/" + roomId + "/leave";
+
+                        msg.convertAndSend(destination, payload);
+                    }
+                } catch (Exception e) {
+                    log.error("Error during cleanup for user {} in room {}: {}", userId, roomId, e.getMessage());
+                }
+            }
+        }
+        log.info("Finished expired user cleanup task.");
+    }
 }
