@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -29,6 +30,13 @@ public class PresenceRepositoryImpl implements PresenceRepository {
     @Override
     public void deleteSession(UUID roomId, UUID userId, String sessionId) {
         redisTemplate.delete(KeyFactory.presence(roomId, userId, sessionId));
+    }
 
+    @Override
+    public Set<String> findExpiredUserInRoom(String roomIdStr, int presenceTtlSec) {
+        String seenKey = KeyFactory.roomSeen(UUID.fromString(roomIdStr));
+        long expiredBefore = System.currentTimeMillis() - (presenceTtlSec * 1000L);
+        Set<String> expiredUserIds = redisTemplate.opsForZSet().rangeByScore(seenKey, 0, expiredBefore);
+        return expiredUserIds != null ? expiredUserIds : Set.of();
     }
 }
