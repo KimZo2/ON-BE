@@ -51,9 +51,9 @@ public class RedisScriptConfig {
             local nowMs         = tonumber(ARGV[8])
 
             -- 1. 방이 이미 존재하는지 확인하여 중복 생성 방지
-            if redis.call('EXISTS', metaKey) == 1 then
-                return 0
-            end
+            -- if redis.call('EXISTS', metaKey) == 1 then
+                -- return 0
+            -- end
 
             -- 2. 방 메타 데이터 생성
             redis.call('HSET', metaKey,
@@ -75,7 +75,7 @@ public class RedisScriptConfig {
             -- EXPIRE는 키가 존재할 때만 동작하므로,
             -- members, pos, seen 키를 빈 상태로라도 미리 생성해줘야 함.
             redis.call('SADD', membersKey, 'init')
-            redis.call('HDEL', membersKey, 'init') -- 빈 Set으로 생성
+            redis.call('SREM', membersKey, 'init') -- 빈 Set으로 생성
             
             redis.call('EXPIRE', metaKey, ttl)
             redis.call('EXPIRE', membersKey, ttl)
