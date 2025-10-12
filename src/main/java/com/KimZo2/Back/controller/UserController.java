@@ -20,8 +20,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/info")
-    public UserInfoResponseDTO getUserInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        UUID userId = userDetails.getId();
+    public UserInfoResponseDTO getUserInfo(@AuthenticationPrincipal String uuid) {
+        UUID userId = UUID.fromString(uuid);
         return userService.getUserId(userId);
     }
 }
