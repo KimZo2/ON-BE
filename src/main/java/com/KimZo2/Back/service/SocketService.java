@@ -3,10 +3,13 @@ package com.KimZo2.Back.service;
 import com.KimZo2.Back.dto.logic.UserLeaveDTO;
 import com.KimZo2.Back.dto.room.JoinResult;
 import com.KimZo2.Back.dto.room.RoomEnterResponseDTO;
+import com.KimZo2.Back.exception.user.UserNotFoundException;
 import com.KimZo2.Back.exception.ws.BadPasswordException;
 import com.KimZo2.Back.exception.ws.RoomNotFoundOrExpiredException;
 import com.KimZo2.Back.model.Room;
+import com.KimZo2.Back.model.User;
 import com.KimZo2.Back.repository.RoomRepository;
+import com.KimZo2.Back.repository.UserRepository;
 import com.KimZo2.Back.repository.redis.JoinRepository;
 import com.KimZo2.Back.repository.redis.RoomCleanUpRepository;
 import com.KimZo2.Back.repository.redis.RoomFunctionRepository;
@@ -30,6 +33,7 @@ public class SocketService {
     private final RoomRepository roomRepository;
 
     private final JoinRepository joinRepository;
+    private final UserRepository userRepository;
     private final RoomCleanUpRepository roomCleanUpRepository;
     private final RoomFunctionRepository roomFunctionRepository;
 
@@ -82,19 +86,20 @@ public class SocketService {
         long nowMs = System.currentTimeMillis();
         // 방 입장
         JoinResult result = joinRepository.join(roomId, userId, sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User Not Found"));
 
         switch (result.status()) {
             case OK -> {
                 // 브로드캐스트
                 msg.convertAndSend("/topic/room/" + roomId + "/msg",
-                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
+                        new RoomEnterResponseDTO(roomId, "JOIN", userId.toString(), user.getNickname(), result.count()));
                 // 개인 응답
                 msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
+                        new RoomEnterResponseDTO(roomId, "JOIN", userId.toString(), user.getNickname(), result.count()));
             }
             case ALREADY, FULL, CLOSED_OR_NOT_FOUND, ERROR ->
                     msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                            new RoomEnterResponseDTO(roomId, result.status().name(), result.count()));
+                            new RoomEnterResponseDTO(roomId, "JOIN", userId.toString(), user.getNickname(), result.count()));
         }
     }
 
