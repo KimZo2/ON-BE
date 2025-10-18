@@ -26,8 +26,8 @@ public class RoomCleanUpRepositoryImpl implements RoomCleanUpRepository {
                 KeyFactory.roomPos(roomId),             // KEYS[2]
                 KeyFactory.roomMeta(roomId),            // KEYS[3]
                 KeyFactory.roomSeen(roomId),            // KEYS[4]
-                KeyFactory.userRoom(UUID.fromString(userId)) // KEYS[5]
-//                KeyFactory.moveRate(roomId, UUID.fromString(userId)) // KEYS[6]
+                KeyFactory.userRoom(UUID.fromString(userId)), // KEYS[5]
+                KeyFactory.roomNicknames(roomId)        // KEYS[6]
         );
 
         // 스크립트를 실행하고 결과를 바로 반환
