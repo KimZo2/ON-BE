@@ -9,5 +9,5 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserInfoResponseDTO {
     private UUID userId;
-    private String nickName;
+    private String nickname;
 }
