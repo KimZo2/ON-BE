@@ -8,6 +8,7 @@ public final class KeyFactory {
     public static String roomMembers(UUID r)       { return "rooms:" + r + ":members"; }
     public static String roomPos(UUID r)           { return "rooms:" + r + ":pos"; }
     public static String roomSeen(UUID r)          { return "rooms:" + r + ":seen"; }
+    public static String roomNicknames(UUID r)   { return "rooms:" + r + ":nicknames"; }
     public static String userRoom(UUID userId)   { return "users:" + userId + ":rooms"; }
     public static String presence(UUID r, UUID u, String s) { return "presence:" + r + ":" + u + ":" + s; }
 //    public static String moveRate(UUID r, UUID u) { return "rate:move:" + r + ":" + u; }
