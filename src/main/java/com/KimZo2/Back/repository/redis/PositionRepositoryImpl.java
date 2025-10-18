@@ -19,7 +19,7 @@ public class PositionRepositoryImpl implements PositionRepository{
     private final DefaultRedisScript<List> userMoveLua;
 
     @Override
-    public MoveResult userMoveLogic(UUID roomId, UUID userId, String sessionId, double x, double y, long ts, long seq, int presenceTtlSec, String direction, boolean isMoving) {
+    public MoveResult userMoveLogic(UUID roomId, UUID userId, String sessionId, String nickname, double x, double y, long ts, long seq, int presenceTtlSec, String direction, boolean isMoving) {
         List<String> keys = List.of(
                 KeyFactory.roomMembers(roomId),
                 KeyFactory.presence(roomId, userId, sessionId),
@@ -37,7 +37,8 @@ public class PositionRepositoryImpl implements PositionRepository{
                 String.valueOf(presenceTtlSec),
                 roomId.toString(),
                 direction,
-                Boolean.toString(isMoving)
+                Boolean.toString(isMoving),
+                nickname
         );
 
         @SuppressWarnings("unchecked")
@@ -55,15 +56,16 @@ public class PositionRepositoryImpl implements PositionRepository{
 
         m.forEach((k, v) -> {
             UUID userId = UUID.fromString(String.valueOf(k));
-            String[] parts = String.valueOf(v).split(",", 6);
+            String[] parts = String.valueOf(v).split(",", 7);
 
-            double x = Double.parseDouble(parts[0]);
-            double y = Double.parseDouble(parts[1]);
-            long seq = Long.parseLong(parts[3]);
-            String direction = parts[4];
-            boolean isMoving = Boolean.parseBoolean(parts[5]);
+            String nickname = parts[0];
+            double x = Double.parseDouble(parts[1]);
+            double y = Double.parseDouble(parts[2]);
+            long seq = Long.parseLong(parts[4]);
+            String direction = parts[5];
+            boolean isMoving = Boolean.parseBoolean(parts[6]);
 
-            out.add(new RoomPosResponseDTO(userId, x, y, seq, direction, isMoving));
+            out.add(new RoomPosResponseDTO(userId, nickname, x, y, seq, direction, isMoving));
         });
 
         return out;
