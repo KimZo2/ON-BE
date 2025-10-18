@@ -57,6 +57,7 @@ public class LogicService {
 //        long c = rateRepository.incrWithWindow(KeyFactory.moveRate(roomId, userId), moveWindowSec);
 //        if (c > moveMaxPerWindow) return ack(false, LogicCode.RATE_LIMIT, cmd.getSeq(), now);
 
+        String nickname = cmd.getNickname();
         double x = cmd.getX();
         double y = cmd.getY();
         long seq = cmd.getSeq();
@@ -65,14 +66,13 @@ public class LogicService {
 
         var res = positionRepository.userMoveLogic(
                 roomId, userId, sessionId,
-                x, y, now,
+                nickname, x, y, now,
                 Optional.ofNullable(cmd.getSeq()).orElse(0L),
                 presenceTtlSec, direction, isMoving
         );
 
         if ("NOT_MEMBER".equals(res.status())) return ack(false, LogicCode.valueOf("NOT_MEMBER"), cmd.getSeq(), now);
-//        if ("STALE".equals(res.status()))     return ack(false, LogicCode.valueOf("STALE"),     res.seq(), now);
-
+//        if ("STALE".equals(res.status()))     return ack(false, LogicCode.valueOf("STALE"),     res.seq(), now)
         // 맵을 가져오거나 새로 생성
         Map<UUID, RoomPosResponseDTO> roomUpdates = deltaMaps.computeIfAbsent(
                 roomId,
@@ -82,7 +82,7 @@ public class LogicService {
         // 유저 ID를 키로 최종 좌표를 덮어씌우기
         roomUpdates.put(
                 userId,
-                new RoomPosResponseDTO(userId, x, y, seq, direction, isMoving)
+                new RoomPosResponseDTO(userId, nickname, x, y, seq, direction, isMoving)
         );
 
         return ack(true, LogicCode.valueOf("OK"), cmd.getSeq(), now);
@@ -130,7 +130,7 @@ public class LogicService {
         }
     }
 
-    @Scheduled(fixedDelayString = "#{1000 / (${app.room.broadcast.batch-hz:15})}")
+    @Scheduled(fixedDelayString = "#{1000 / (${app.room.broadcast.batch-hz:60})}")
     public void flushBatches() {
         for (var e : deltaMaps.entrySet()) {
             UUID roomId = e.getKey();
