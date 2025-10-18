@@ -85,8 +85,8 @@ public class SocketService {
     public void joinRoom(UUID roomId, UUID userId, String sessionId) {
         long nowMs = System.currentTimeMillis();
         // 방 입장
-        JoinResult result = joinRepository.join(roomId, userId, sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+        JoinResult result = joinRepository.join(roomId, userId, user.getNickname(), sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
 
         switch (result.status()) {
             case OK -> {
