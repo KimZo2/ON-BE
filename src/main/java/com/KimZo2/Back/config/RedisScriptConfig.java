@@ -114,12 +114,14 @@ public class RedisScriptConfig {
             -- 3) users:{userId}:rooms          (유저 역참조 STRING)
             -- 4) presence:{roomId}:{userId}:{sessionId}  (프레즌스 STRING)
             -- 5) rooms:hot
+            -- 6) rooms:{roomId}:nicknames     (닉네임 해시)
             --
             -- ARGV:
             -- 1) userId
-            -- 2) presenceTtlSec
-            -- 3) userRoomTtlSec
-            -- 4) nowMs
+            -- 2) nickname
+            -- 3) presenceTtlSec
+            -- 4) userRoomTtlSec
+            -- 5) nowMs
             --
             -- 반환: {code, count}
             -- code: 0 OK, 4 ALREADY, 3 FULL, 1 CLOSED_OR_NOT_FOUND
@@ -128,12 +130,14 @@ public class RedisScriptConfig {
             local membersKey = KEYS[2]
             local userRoom   = KEYS[3]
             local presence   = KEYS[4]
-            local hotKey     = KEYS[5] 
+            local hotKey     = KEYS[5]
+            local nickKey    = KEYS[6]
 
             local uid        = ARGV[1]
-            local pttl       = tonumber(ARGV[2])
-            local urttl      = tonumber(ARGV[3])
-            local nowMs      = tonumber(ARGV[4])
+            local nick       = ARGV[2]
+            local pttl       = tonumber(ARGV[3])
+            local urttl      = tonumber(ARGV[4])
+            local nowMs      = tonumber(ARGV[5])
 
             -- 방 존재/활성 확인
             if redis.call('EXISTS', metaKey) == 0 then
@@ -165,9 +169,10 @@ public class RedisScriptConfig {
 
             -- 입장 처리 (원자)
             redis.call('SADD', membersKey, uid)
+            redis.call('HSET', nickKey, uid, nick)
             local newCur = redis.call('HINCRBY', metaKey, 'roomCurrentPersonCnt', 1)
             redis.call('SET', presence, '1', 'EX', pttl)
-            local rid = string.match(metaKey, 'room:(.+)$')
+            local rid = string.match(metaKey, 'rooms:(.+)$')
             if rid then
                 redis.call('SET', userRoom, rid, 'EX', urttl)
                 redis.call('ZADD', hotKey, nowMs, rid)
@@ -203,6 +208,7 @@ public class RedisScriptConfig {
     -- 8: roomId
     -- 9: direction
     -- 10: isMoving
+    -- 11: nickname
 
     local userId   = ARGV[1]
     local session  = ARGV[2]
@@ -214,6 +220,7 @@ public class RedisScriptConfig {
     local roomId    = ARGV[8]
     local direction = ARGV[9]
     local isMoving  = ARGV[10] or "false"
+    local nickname  = ARGV[11]
     
 
     -- 1) member check
@@ -228,10 +235,10 @@ public class RedisScriptConfig {
     local field = userId
     local old = redis.call('HGET', KEYS[3], field)
     if old then
-        -- old format: "x,y,ts,seq,direction,isMoving"
+        -- old format: "nickname,x,y,ts,seq,direction,isMoving"
         local parts = {}
         for v in string.gmatch(old, '([^,]+)') do table.insert(parts, v) end
-        local oldSeq = tonumber(parts[4]) or -1
+        local oldSeq = tonumber(parts[5]) or -1
         if seq <= oldSeq then
             -- stale; do not update pos, but still update seen/presence
             redis.call('ZADD', KEYS[4], ts, userId)
@@ -242,7 +249,7 @@ public class RedisScriptConfig {
         end
     end
 
-    local value = x .. ',' .. y .. ',' .. tostring(ts) .. ',' .. tostring(seq) .. ',' .. direction .. ',' .. isMoving
+    local value = nickname .. ',' .. x .. ',' .. y .. ',' .. tostring(ts) .. ',' .. tostring(seq) .. ',' .. direction .. ',' .. isMoving
     redis.call('HSET', KEYS[3], field, value)
 
     -- 4) update seen
@@ -272,7 +279,7 @@ public class RedisScriptConfig {
         -- 3: rooms:{roomId}               (메타 HASH)
         -- 4: rooms:{roomId}:seen          (마지막 활동 Sorted Set)
         -- 5: users:{userId}:rooms         (유저-방 역참조 STRING)
-        -- 6: rate:move:{roomId}:{userId}  (이동 빈도 제한 STRING)
+        -- 6: rooms:{roomId}:nicknames     (닉네임 HASH)
         --
         -- ARGV:
         -- 1: userId
@@ -284,12 +291,13 @@ public class RedisScriptConfig {
         local metaKey    = KEYS[3]
         local seenKey    = KEYS[4]
         local userRoomKey= KEYS[5]
-        -- local moveRateKey= KEYS[6]
+        local nickKey    = KEYS[6]
         local uid        = ARGV[1]
 
         if redis.call('SREM', membersKey, uid) == 1 then
             -- 기존 정리 로직
             redis.call('HDEL', posKey, uid)
+            redis.call('HDEL', nickKey, uid) 
             redis.call('HINCRBY', metaKey, 'roomCurrentPersonCnt', -1)
             redis.call('ZREM', seenKey, uid)
             
