@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -145,7 +146,7 @@ public class AuthService {
     }
 
     public Map<String, Object> issueNewAccessToken(String userId) {
-        User user = userRepository.findById(Long.valueOf(userId))
+        User user = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
 
         String newAccessToken = jwtUtil.createAccessToken(user.getId().toString(), user.getNickname(), user.getProvider());

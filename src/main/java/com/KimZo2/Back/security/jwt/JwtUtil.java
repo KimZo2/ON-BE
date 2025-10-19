@@ -7,13 +7,12 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -23,8 +22,6 @@ public class JwtUtil {
     private final long accessTokenExpTime;
     private final long refreshTokenExpTime;
     private final long clockSkewSeconds;
-    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
-
 
     public JwtUtil(
             @Value("${jwt.secret}") String secretKey,
@@ -54,11 +51,12 @@ public class JwtUtil {
 
     // JWT 생성 로직 통합
     private String createToken(String userId, String typ, Map<String, Object> claims, long expTime) {
+        Map<String, Object> tokenClaims = new HashMap<>(claims);
+        tokenClaims.put("typ", typ);
         Instant now = Instant.now();
-        claims.put("typ", typ);
         return Jwts.builder()
                 .setSubject(userId)
-                .addClaims(claims)
+                .addClaims(tokenClaims)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(now.plus(expTime, ChronoUnit.SECONDS)))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -72,7 +70,7 @@ public class JwtUtil {
 
     public boolean isAccessToken(String token) {
         try {
-            return "access".equals(parseClaims(token).get("typ"));
+            return "access".equals(parseClaims(token).get("typ")) && !isExpired(token);
         } catch (JwtException e) {
             log.warn("AccessToken 확인 중 오류 발생: {}", e.getMessage());
             return false;
@@ -81,7 +79,7 @@ public class JwtUtil {
 
     public boolean isRefreshToken(String token) {
         try {
-            return "refresh".equals(parseClaims(token).get("typ"));
+            return "refresh".equals(parseClaims(token).get("typ")) && !isExpired(token);
         } catch (JwtException e) {
             log.warn("RefreshToken 확인 중 오류 발생: {}", e.getMessage());
             return false;
