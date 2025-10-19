@@ -18,16 +18,19 @@ import java.util.Map;
 public class JwtUtil {
     private final Key key;
     private final long accessTokenExpTime;
+    private final long refreshTokenExpTime;
     private final long clockSkewSeconds;
 
     public JwtUtil(
             @Value("${jwt.secret}") String secretKey,
             @Value("${jwt.expiration_time}") long accessTokenExpTime,
-            @Value("${jwt.clock-skew-seconds:60}") long clockSkewSeconds
+            @Value("${jwt.clock-skew-seconds:60}") long clockSkewSeconds,
+            @Value("${jwt.refresh_expiration_time}") long refreshTokenExpTime
     ){
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenExpTime = accessTokenExpTime;
+        this.refreshTokenExpTime = refreshTokenExpTime;
         this.clockSkewSeconds = clockSkewSeconds;
     }
 
@@ -46,6 +49,19 @@ public class JwtUtil {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
+
+    // RT 생성
+    public String createRefreshToken(String userId) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .setSubject(userId)
+                .addClaims(Map.of("typ", "refresh"))
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plus(refreshTokenExpTime, ChronoUnit.SECONDS))) // RefreshToken: 7일 유효
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
 
     public String getUserId(String token) {
         return parseClaims(token).getSubject();
