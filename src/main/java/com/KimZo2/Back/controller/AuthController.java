@@ -118,4 +118,28 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", "회원가입이 완료되었습니다."));
     }
+
+    @Operation(summary = "Access Token 재발급", description = "만료된 Access Token을 Refresh Token으로 갱신합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Access Token 재발급 성공"),
+            @ApiResponse(responseCode = "401", description = "Refresh Token 만료 또는 유효하지 않음 → 재로그인 필요")
+    })
+    @GetMapping("/refresh")
+    public ResponseEntity<?> refreshToken(HttpServletResponse response,
+                                          @CookieValue(value = "refreshToken", required = false) String refreshToken) {
+        log.info("AuthController - /refresh  - 실행");
+
+        if (refreshToken == null || !authService.validateRefreshToken(refreshToken)) {
+            log.warn("Refresh Token 없음 또는 유효하지 않음");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "재로그인이 필요합니다."));
+        }
+
+        // 새 Access Token 발급
+        String userId = authService.getUserIdFromRefreshToken(refreshToken);
+        Map<String, Object> accessTokenData = authService.issueNewAccessToken(userId);
+
+        // response body에 새 Access Token 전달
+        return ResponseEntity.ok(accessTokenData);
+    }
 }

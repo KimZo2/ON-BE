@@ -65,6 +65,11 @@ public class JwtUtil {
                 .compact();
     }
 
+    public long getRefreshTokenExpTime() {
+        return refreshTokenExpTime;
+    }
+
+
     public boolean isAccessToken(String token) {
         try {
             return "access".equals(parseClaims(token).get("typ"));

@@ -11,6 +11,7 @@ import com.KimZo2.Back.util.GoogleUtil;
 import com.KimZo2.Back.util.KakaoUtil;
 import com.KimZo2.Back.util.NaverUtil;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +30,10 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     @Value("${jwt.expiration_time}")
-    private int tokenExpireTime;
+    private long tokenExpireTime;
+    @Value("${jwt.refresh_expiration_time}")
+    private long refreshTokenExpTime;
+
 
     private final KakaoUtil kakaoUtil;
     private final NaverUtil naverUtil;
@@ -109,15 +114,48 @@ public class AuthService {
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
 
-            String token = jwtUtil.createAccessToken(user.getId().toString(), user.getNickname(), user.getProvider());
-            long nowMills = System.currentTimeMillis() + tokenExpireTime * 1000L;
+            // Access Token
+            String accessToken = jwtUtil.createAccessToken(user.getId().toString(), user.getNickname(), user.getProvider());
+            // Refresh Token
+            String refreshToken = jwtUtil.createRefreshToken(user.getId().toString());
 
-            response.setHeader("Authorization", token);
-            return new LoginResponseDTO(token, nowMills, user.getNickname());
+            response.setHeader("Authorization", "Bearer " + accessToken);
+            Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge((int) refreshTokenExpTime);
+            response.addCookie(refreshCookie);
+
+            long nowMills = System.currentTimeMillis() + tokenExpireTime * 1000L;
+            return new LoginResponseDTO(accessToken, nowMills, user.getNickname());
         } else {
             throw new AdditionalSignupRequiredException(provider, providerId);
         }
     }
+
+    public boolean validateRefreshToken(String token) {
+        return jwtUtil.validateRefreshToken(token) && !jwtUtil.isExpired(token);
+    }
+
+    public String getUserIdFromRefreshToken(String token) {
+        if (!validateRefreshToken(token)) {
+            throw new RuntimeException("유효하지 않은 Refresh Token");
+        }
+        return jwtUtil.getUserId(token);
+    }
+
+    public Map<String, Object> issueNewAccessToken(String userId) {
+        User user = userRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
+
+        String newAccessToken = jwtUtil.createAccessToken(user.getId().toString(), user.getNickname(), user.getProvider());
+        long nowMills = System.currentTimeMillis() + tokenExpireTime * 1000L;
+
+        return Map.of(
+                "token", newAccessToken,
+                "tokenExpire", nowMills);
+    }
+
 
     public void oAuthcreateNewUser(AdditionalSignupRequest dto, HttpServletResponse response) {
         log.info("AuthService - 회원가입 실행");
