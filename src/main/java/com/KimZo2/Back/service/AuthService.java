@@ -35,7 +35,6 @@ public class AuthService {
     @Value("${jwt.refresh_expiration_time}")
     private long refreshTokenExpTime;
 
-
     private final KakaoUtil kakaoUtil;
     private final NaverUtil naverUtil;
     private final UserService userService;
@@ -120,12 +119,16 @@ public class AuthService {
             // Refresh Token
             String refreshToken = jwtUtil.createRefreshToken(user.getId().toString());
 
-            response.setHeader("Authorization", "Bearer " + accessToken);
-            Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
-            refreshCookie.setHttpOnly(true);
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge((int) refreshTokenExpTime);
-            response.addCookie(refreshCookie);
+            //여기 부분에 RT Redis에 넣기
+
+
+            String cookieValue = String.format(
+//              "refreshToken=%s; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=%d", // Secure는 운영 환경에서 켜둬야하며, Https 환경에서 쿠키가 전송됨
+                "refreshToken=%s; Path=/; HttpOnly; SameSite=Strict; Max-Age=%d",
+                refreshToken,
+                (int) refreshTokenExpTime
+            );
+            response.setHeader("Set-Cookie", cookieValue);
 
             long nowMills = System.currentTimeMillis() + tokenExpireTime * 1000L;
             return new LoginResponseDTO(accessToken, nowMills, user.getNickname());

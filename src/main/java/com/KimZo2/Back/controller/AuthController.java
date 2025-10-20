@@ -128,7 +128,7 @@ public class AuthController {
     public ResponseEntity<?> refreshToken(HttpServletResponse response,
                                           @CookieValue(value = "refreshToken", required = false) String refreshToken) {
         log.info("AuthController - /refresh  - 실행");
-
+        log.info("refresh token 값 - "+refreshToken);
         if (refreshToken == null || !authService.validateRefreshToken(refreshToken)) {
             log.warn("Refresh Token 없음 또는 유효하지 않음");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
