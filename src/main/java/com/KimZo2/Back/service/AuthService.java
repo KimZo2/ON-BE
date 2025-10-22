@@ -5,6 +5,7 @@ import com.KimZo2.Back.dto.member.LoginResponseDTO;
 import com.KimZo2.Back.model.User;
 import com.KimZo2.Back.exception.login.AdditionalSignupRequiredException;
 import com.KimZo2.Back.repository.UserRepository;
+import com.KimZo2.Back.repository.redis.RefreshTokenRepository;
 import com.KimZo2.Back.security.jwt.JwtUtil;
 import com.KimZo2.Back.util.GitHubUtil;
 import com.KimZo2.Back.util.GoogleUtil;
@@ -43,6 +44,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final GitHubUtil gitHubUtil;
     private final GoogleUtil googleUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public LoginResponseDTO oAuthLoginWithKakao(String accessCode, HttpServletResponse response) {
         log.info("AuthService - 카카오 인증 실행");
@@ -113,13 +115,16 @@ public class AuthService {
 
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
+            String userId = user.getId().toString();
 
             // Access Token
-            String accessToken = jwtUtil.createAccessToken(user.getId().toString(), user.getNickname(), user.getProvider());
+            String accessToken = jwtUtil.createAccessToken(userId, user.getNickname(), user.getProvider());
             // Refresh Token
-            String refreshToken = jwtUtil.createRefreshToken(user.getId().toString());
-
-            //여기 부분에 RT Redis에 넣기
+            String refreshToken = jwtUtil.createRefreshToken(userId);
+            // 기존 RT가 있으면 삭제 후 새로 저장 (중복 로그인 방지)
+            refreshTokenRepository.delete(userId);
+            refreshTokenRepository.save(userId, refreshToken, refreshTokenExpTime);
+            log.info("✅ Redis에 RefreshToken 저장 완료: userId={}, token={}", userId, refreshToken);
 
 
             String cookieValue = String.format(
@@ -146,6 +151,10 @@ public class AuthService {
             throw new RuntimeException("유효하지 않은 Refresh Token");
         }
         return jwtUtil.getUserId(token);
+    }
+
+    public String getStoredRefreshToken(String userId) {
+        return refreshTokenRepository.findByUserId(userId);
     }
 
     public Map<String, Object> issueNewAccessToken(String userId) {

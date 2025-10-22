@@ -137,9 +137,16 @@ public class AuthController {
 
         // 새 Access Token 발급
         String userId = authService.getUserIdFromRefreshToken(refreshToken);
-        Map<String, Object> accessTokenData = authService.issueNewAccessToken(userId);
+        // Redis에 저장된 refresh token과 비교
+        String storedToken = authService.getStoredRefreshToken(userId);
+        if (storedToken == null || !storedToken.equals(refreshToken)) {
+            log.warn("Redis에 저장된 Refresh Token과 불일치 → 재로그인 필요");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "재로그인이 필요합니다."));
+        }
+        log.info("Redis에 저장된 Refresh Token과 "+storedToken.equals(refreshToken));
 
-        // response body에 새 Access Token 전달
+        Map<String, Object> accessTokenData = authService.issueNewAccessToken(userId);
         return ResponseEntity.ok(accessTokenData);
     }
 }
