@@ -198,4 +198,16 @@ public class AuthService {
         userRepository.save(newUser);
         log.info(newUser.toString());
     }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        // 1. Refresh Token에서 userId 추출
+        String userId = getUserIdFromRefreshToken(refreshToken);
+        log.info("로그아웃 요청: userId = {}", userId);
+
+        // 2. Redis에서 Refresh Token 삭제
+        refreshTokenRepository.delete(userId);
+        log.info("Redis에서 Refresh Token 삭제 완료");
+    }
+
 }

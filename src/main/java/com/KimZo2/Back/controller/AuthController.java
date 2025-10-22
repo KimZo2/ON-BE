@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -128,7 +129,7 @@ public class AuthController {
     public ResponseEntity<?> refreshToken(HttpServletResponse response,
                                           @CookieValue(value = "refreshToken", required = false) String refreshToken) {
         log.info("AuthController - /refresh  - 실행");
-        log.info("refresh token 값 - "+refreshToken);
+//        log.info("refresh token 값 - "+refreshToken);
         if (refreshToken == null || !authService.validateRefreshToken(refreshToken)) {
             log.warn("Refresh Token 없음 또는 유효하지 않음");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -144,9 +145,41 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "재로그인이 필요합니다."));
         }
-        log.info("Redis에 저장된 Refresh Token과 "+storedToken.equals(refreshToken));
+        log.info("Redis에 저장된 Refresh Token과 " + storedToken.equals(refreshToken));
 
         Map<String, Object> accessTokenData = authService.issueNewAccessToken(userId);
         return ResponseEntity.ok(accessTokenData);
     }
+
+    @Operation(summary = "로그아웃", description = "Refresh Token을 삭제하고 로그아웃합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+            @ApiResponse(responseCode = "400", description = "Refresh Token이 없음")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+            @CookieValue(value = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        log.info("AuthController - /logout 실행");
+
+        if (refreshToken == null) {
+            log.warn("Refresh Token이 쿠키에 없음");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Refresh Token이 없습니다."));
+        }
+
+        // redis에 저장된 refresh token 삭제
+        authService.logout(refreshToken);
+
+        // 쿠키도 제거
+        Cookie deleteCookie = new Cookie("refreshToken", null);
+        deleteCookie.setPath("/");
+        deleteCookie.setHttpOnly(true);
+        deleteCookie.setMaxAge(0); // 즉시 만료
+        response.addCookie(deleteCookie);
+
+        return ResponseEntity.ok(Map.of("message", "로그아웃이 완료되었습니다."));
+    }
+
 }
