@@ -117,23 +117,22 @@ public class AuthService {
             User user = optionalUser.get();
             String userId = user.getId().toString();
 
-            // Access Token
             String accessToken = jwtUtil.createAccessToken(userId, user.getNickname(), user.getProvider());
-            // Refresh Token
             String refreshToken = jwtUtil.createRefreshToken(userId);
             // 기존 RT가 있으면 삭제 후 새로 저장 (중복 로그인 방지)
             refreshTokenRepository.delete(userId);
             refreshTokenRepository.save(userId, refreshToken, refreshTokenExpTime);
-            log.info("✅ Redis에 RefreshToken 저장 완료: userId={}, token={}", userId, refreshToken);
+            log.info("Redis에 RefreshToken 저장 완료: userId={}, token={}", userId, refreshToken);
 
-
-            String cookieValue = String.format(
-//              "refreshToken=%s; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=%d", // Secure는 운영 환경에서 켜둬야하며, Https 환경에서 쿠키가 전송됨
-                "refreshToken=%s; Path=/; HttpOnly; SameSite=Strict; Max-Age=%d",
-                refreshToken,
-                (int) refreshTokenExpTime
-            );
-            response.setHeader("Set-Cookie", cookieValue);
+            Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setHttpOnly(true);
+            // TODO: 운영 환경에서는 프로필에 따라 Secure=true 설정을 활성화해야 합니다.
+            // if (isProductionProfile) {
+            //   refreshTokenCookie.setSecure(true);
+            // }
+            refreshTokenCookie.setMaxAge((int) refreshTokenExpTime);
+            response.addCookie(refreshTokenCookie);
 
             long nowMills = System.currentTimeMillis() + tokenExpireTime * 1000L;
             return new LoginResponseDTO(accessToken, nowMills, user.getNickname());
