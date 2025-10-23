@@ -14,22 +14,23 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 
     @Qualifier("redisTemplateForDb1")
     private final RedisTemplate<String, Object> redisTemplateForDb1;
+    private static final String REFRESH_TOKEN_PREFIX = "RT:";
 
     @Override
     public void save(String userId, String refreshToken, long expirationSeconds) {
         ValueOperations<String, Object> ops = redisTemplateForDb1.opsForValue();
-        ops.set("RT:" + userId, refreshToken, expirationSeconds, TimeUnit.SECONDS);
+        ops.set(REFRESH_TOKEN_PREFIX + userId, refreshToken, expirationSeconds, TimeUnit.SECONDS);
     }
 
     @Override
     public String findByUserId(String userId) {
         ValueOperations<String, Object> ops = redisTemplateForDb1.opsForValue();
-        Object value = ops.get("RT:" + userId);
+        Object value = ops.get(REFRESH_TOKEN_PREFIX + userId);
         return value != null ? value.toString() : null;
     }
 
     @Override
     public void delete(String userId) {
-        redisTemplateForDb1.delete("RT:" + userId);
+        redisTemplateForDb1.delete(REFRESH_TOKEN_PREFIX + userId);
     }
 }
