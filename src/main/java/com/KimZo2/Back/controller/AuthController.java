@@ -129,7 +129,6 @@ public class AuthController {
     public ResponseEntity<?> refreshToken(HttpServletResponse response,
                                           @CookieValue(value = "refreshToken", required = false) String refreshToken) {
         log.info("AuthController - /refresh  - 실행");
-//        log.info("refresh token 값 - "+refreshToken);
         if (refreshToken == null || !authService.validateRefreshToken(refreshToken)) {
             log.warn("Refresh Token 없음 또는 유효하지 않음");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -169,10 +168,7 @@ public class AuthController {
                     .body(Map.of("message", "Refresh Token이 없습니다."));
         }
 
-        // redis에 저장된 refresh token 삭제
         authService.logout(refreshToken);
-
-        // 쿠키도 제거
         Cookie deleteCookie = new Cookie("refreshToken", null);
         deleteCookie.setPath("/");
         deleteCookie.setHttpOnly(true);
