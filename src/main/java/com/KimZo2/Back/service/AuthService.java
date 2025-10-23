@@ -142,7 +142,7 @@ public class AuthService {
     }
 
     public boolean validateRefreshToken(String token) {
-        return jwtUtil.validateRefreshToken(token) && !jwtUtil.isExpired(token);
+        return jwtUtil.validateRefreshToken(token);
     }
 
     public String getUserIdFromRefreshToken(String token) {
