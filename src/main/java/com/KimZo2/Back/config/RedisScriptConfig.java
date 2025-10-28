@@ -20,6 +20,7 @@ public class RedisScriptConfig {
             -- 5: rooms:active_list         (전체 활성 방 Set)
             -- 6: rooms:hot                 (인기 방 Sorted Set)
             -- 7: rooms:public              (공개 방 Sorted Set)
+            -- 8: rooms:notify:{roomId}     (10분 전 알림용 키)
             --
             -- ARGV:
             -- 1: roomId
@@ -40,6 +41,7 @@ public class RedisScriptConfig {
             local activeListKey = KEYS[5]
             local hotKey        = KEYS[6]
             local publicIdxKey  = KEYS[7]
+            local notifyKey     = KEYS[8]
 
             local roomId        = ARGV[1]
             local roomName      = ARGV[2]
@@ -94,6 +96,13 @@ public class RedisScriptConfig {
             if visibility == '0' then -- 공개 방일 경우
                 redis.call('ZADD', publicIdxKey, nowMs, roomId)
             end
+            
+            -- 방 종료 10분전 알림 설정
+            local notifyTtl = ttl - 600;
+            if notifyTtl > 0 then
+                redis.call('SET', notifyKey, '1')
+                redis.call('EXPIRE', notifyKey, notifyTtl)
+            end  
 
             return 1
             """;
@@ -310,6 +319,44 @@ public class RedisScriptConfig {
 
         return 0
     """;
+        DefaultRedisScript<Long> lua = new DefaultRedisScript<>();
+        lua.setScriptText(script);
+        lua.setResultType(Long.class);
+        return lua;
+    }
+
+    @Bean
+    public DefaultRedisScript<Long> deleteRoomLua() {
+        String script = """
+                -- KEYS:
+                -- 1: rooms:meta:{roomId}
+                -- 2: rooms:members:{roomId}
+                -- 3: rooms:pos:{roomId}
+                -- 4: rooms:seen:{roomId}
+                -- 5: rooms:active:zset
+                -- 6: rooms:hot:zset
+                -- 7: rooms:public:zset
+                -- ARGV:
+                -- 1: roomId
+
+                -- Check if the room exists
+                if redis.call('exists', KEYS[1]) == 0 then
+                    return 0
+                end
+
+                -- Delete room-related data
+                redis.call('del', KEYS[1]) -- room meta
+                redis.call('del', KEYS[2]) -- room members
+                redis.call('del', KEYS[3]) -- room positions
+                redis.call('del', KEYS[4]) -- room seen users
+
+                -- Remove room from sorted sets
+                redis.call('zrem', KEYS[5], ARGV[1]) -- active rooms
+                redis.call('zrem', KEYS[6], ARGV[1]) -- hot rooms
+                redis.call('zrem', KEYS[7], ARGV[1]) -- public rooms
+
+                return 1
+                """;
         DefaultRedisScript<Long> lua = new DefaultRedisScript<>();
         lua.setScriptText(script);
         lua.setResultType(Long.class);
