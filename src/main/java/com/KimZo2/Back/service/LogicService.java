@@ -3,7 +3,6 @@ package com.KimZo2.Back.service;
 import com.KimZo2.Back.dto.logic.*;
 import com.KimZo2.Back.dto.room.RoomPosResponseDTO;
 import com.KimZo2.Back.repository.redis.*;
-import com.KimZo2.Back.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Slf4j
 @Service
@@ -54,6 +52,7 @@ public class LogicService {
         long now = System.currentTimeMillis();
 
         // 요청 빈도 제한 -> 5초 안에 50번 요청 하면 비정상 요청 처리
+        // Client인 Parser 부분의 반복적인 요청으로 인해 이는 잠시 미룸
 //        long c = rateRepository.incrWithWindow(KeyFactory.moveRate(roomId, userId), moveWindowSec);
 //        if (c > moveMaxPerWindow) return ack(false, LogicCode.RATE_LIMIT, cmd.getSeq(), now);
 
@@ -72,7 +71,7 @@ public class LogicService {
         );
 
         if ("NOT_MEMBER".equals(res.status())) return ack(false, LogicCode.valueOf("NOT_MEMBER"), cmd.getSeq(), now);
-//        if ("STALE".equals(res.status()))     return ack(false, LogicCode.valueOf("STALE"),     res.seq(), now)
+
         // 맵을 가져오거나 새로 생성
         Map<UUID, RoomPosResponseDTO> roomUpdates = deltaMaps.computeIfAbsent(
                 roomId,
@@ -106,6 +105,7 @@ public class LogicService {
         return m;
     }
 
+    // 유저가 최근에 움직인 방의 모든 좌표를 검증하는 로직
     @Scheduled(fixedDelay = 5_000)
     public void pushHotRooms() {
         long now = System.currentTimeMillis();
@@ -130,6 +130,7 @@ public class LogicService {
         }
     }
 
+    // 큐에 저장되어 있는 유저의 움직임을 60Hz로 보내는 로직
     @Scheduled(fixedDelayString = "#{1000 / (${app.room.broadcast.batch-hz:60})}")
     public void flushBatches() {
         for (var e : deltaMaps.entrySet()) {
