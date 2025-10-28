@@ -45,7 +45,8 @@ public class RoomStoreRepositoryImpl implements RoomStoreRepository {
                 KeyFactory.roomSeen(roomId),       // KEYS[4]
                 KeyFactory.roomActive(),           // KEYS[5]
                 KeyFactory.roomHot(),              // KEYS[6]
-                KeyFactory.roomPublic()            // KEYS[7]
+                KeyFactory.roomPublic(),           // KEYS[7]
+                KeyFactory.roomNotify(roomId)      // KEYS[8]
         );
 
         // ARGV 값들을 문자열로 준비
