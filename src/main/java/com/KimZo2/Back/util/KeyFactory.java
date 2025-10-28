@@ -3,6 +3,7 @@ package com.KimZo2.Back.util;
 import java.util.UUID;
 
 public final class KeyFactory {
+
     private KeyFactory() {}
     public static String roomMeta(UUID r)          { return "rooms:" + r; }
     public static String roomMembers(UUID r)       { return "rooms:" + r + ":members"; }
@@ -16,6 +17,7 @@ public final class KeyFactory {
     public static String roomName(String name) {return "roomsName:" + name;}
     public static String roomPublic() {return "rooms:public";}
     public static String roomActive() {return "rooms:active_list";}
+    public static String roomNotify(UUID r) {return "rooms:notify:" + r;}
 }
 
 
