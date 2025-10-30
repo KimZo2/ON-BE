@@ -2,11 +2,14 @@ package com.KimZo2.Back.service;
 
 import com.KimZo2.Back.dto.logic.*;
 import com.KimZo2.Back.dto.room.RoomPosResponseDTO;
-import com.KimZo2.Back.repository.redis.*;
+import com.KimZo2.Back.repository.redis.PositionRepository;
+import com.KimZo2.Back.repository.redis.PresenceRepository;
+import com.KimZo2.Back.repository.redis.RateLimitRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -22,9 +25,6 @@ public class LogicService {
     private final PresenceRepository presenceRepository;
     private final PositionRepository positionRepository;
     private final RateLimitRepository rateRepository;
-    private final RoomFunctionRepository roomFunctionRepository;
-    private final RoomCleanUpRepositoryImpl roomCleanUpRepository;
-
     private final SimpMessagingTemplate msg;
 
     @Value("${app.room.session.presence-ttl-seconds:120}") private int presenceTtlSec;
@@ -32,10 +32,6 @@ public class LogicService {
 
     @Value("${app.room.move.window-sec:5}")  private int moveWindowSec;
     @Value("${app.room.move.max-per-window:50}") private int moveMaxPerWindow;
-
-    @Value("${app.room.hot.room-per-tick:5000}") private long roomPerTIck;
-    @Value("${app.room.hot.max-room-per-tick:200}") private long maxRoomPerTick;
-
 
     // 배치 브로드캐스트 큐
     // Map<방 ID, Map<유저 ID, 최종 좌표 객체>>
@@ -105,31 +101,6 @@ public class LogicService {
         return m;
     }
 
-    // 유저가 최근에 움직인 방의 모든 좌표를 검증하는 로직
-    @Scheduled(fixedDelay = 5_000)
-    public void pushHotRooms() {
-        long now = System.currentTimeMillis();
-        long from = now - roomPerTIck;
-
-        Set<String> hot = roomFunctionRepository.roomRecentHot(from, now);
-
-        if (hot == null || hot.isEmpty()) return;
-
-        int count = 0;
-        for (String ridStr : hot) {
-            if (count++ >= maxRoomPerTick) break; // 한 틱 과다 전송 방지
-            UUID roomId = UUID.fromString(ridStr);
-
-            var positions = positionRepository.loadAll(roomId);
-            if (positions == null || positions.isEmpty()) continue;
-
-            var s = new Snapshot();
-            s.setPositions(positions);
-            s.setServerTs(System.currentTimeMillis());
-            msg.convertAndSend("/topic/room/" + roomId + "/pos-snapshot", s);
-        }
-    }
-
     // 큐에 저장되어 있는 유저의 움직임을 60Hz로 보내는 로직
     @Scheduled(fixedDelayString = "#{1000 / (${app.room.broadcast.batch-hz:60})}")
     public void flushBatches() {
@@ -158,37 +129,5 @@ public class LogicService {
                 msg.convertAndSend("/topic/room/" + roomId + "/pos", frame);
             }
         }
-    }
-
-    // 유저 세션 관리
-    @Scheduled(fixedDelay = 120000)
-    public void cleanupExpiredUsers() {
-        Set<String> allRoomIds = roomFunctionRepository.allRoomIds();
-        if (allRoomIds == null || allRoomIds.isEmpty()) {
-            return;
-        }
-
-        for (String roomId : allRoomIds) {
-            Set<String> expiredUserIds = presenceRepository.findExpiredUserInRoom(roomId, presenceTtlSec);
-            if (expiredUserIds.isEmpty()) {
-                continue;
-            }
-            for (String userId : expiredUserIds) {
-                try {
-                    Long result = roomCleanUpRepository.cleanupExpiredUser(UUID.fromString(roomId), userId);
-
-                    // Repository의 결과에 따라 STOMP 메시지 전송
-                    if (result != null && result == 1) {
-                        UserLeaveDTO payload = new UserLeaveDTO(userId, "SESSION_EXPIRED");
-                        String destination = "/topic/room/" + roomId + "/leave";
-
-                        msg.convertAndSend(destination, payload);
-                    }
-                } catch (Exception e) {
-                    log.error("Error during cleanup for user {} in room {}: {}", userId, roomId, e.getMessage());
-                }
-            }
-        }
-        log.info("Finished expired user cleanup task.");
     }
 }
