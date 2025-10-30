@@ -1,6 +1,7 @@
 package com.KimZo2.Back.listener;
 
 import com.KimZo2.Back.repository.redis.RoomCleanUpRepository;
+import com.KimZo2.Back.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,11 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.UUID;
-
-class KeyFactory {
-    public static final String ROOM_META_PREFIX = "rooms:";
-    public static final String ROOM_NOTIFY_PREFIX = "rooms:notify:";
-}
 
 @Component
 @RequiredArgsConstructor

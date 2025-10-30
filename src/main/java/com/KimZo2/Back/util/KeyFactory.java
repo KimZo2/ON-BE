@@ -4,7 +4,6 @@ import java.util.UUID;
 
 public final class KeyFactory {
 
-    private KeyFactory() {}
     public static String roomMeta(UUID r)          { return "rooms:" + r; }
     public static String roomMembers(UUID r)       { return "rooms:" + r + ":members"; }
     public static String roomPos(UUID r)           { return "rooms:" + r + ":pos"; }
@@ -18,6 +17,10 @@ public final class KeyFactory {
     public static String roomPublic() {return "rooms:public";}
     public static String roomActive() {return "rooms:active_list";}
     public static String roomNotify(UUID r) {return "rooms:notify:" + r;}
+
+
+    public static String ROOM_META_PREFIX = "rooms:";
+    public static final String ROOM_NOTIFY_PREFIX = "rooms:notify:";
 }
 
 
