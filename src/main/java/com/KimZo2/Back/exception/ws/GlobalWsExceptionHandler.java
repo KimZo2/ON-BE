@@ -53,7 +53,7 @@ public class GlobalWsExceptionHandler {
     }
 
     @MessageExceptionHandler(AccessDeniedException.class)
-    public ErrorResponse handleAccessDenied(RoomAccessDeniedException e) {
+    public ErrorResponse handleAccessDenied(AccessDeniedException  e) {
         log.warn("Access Denied WebSocket exception: {}", e.getMessage());
         return new ErrorResponse("UNAUTHENTICATED_USER", e.getMessage());
     }
