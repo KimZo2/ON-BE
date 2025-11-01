@@ -329,11 +329,11 @@ public class RedisScriptConfig {
     public DefaultRedisScript<Long> deleteRoomLua() {
         String script = """
                 -- KEYS:
-                -- 1: rooms:meta:{roomId}
-                -- 2: rooms:members:{roomId}
-                -- 3: rooms:pos:{roomId}
-                -- 4: rooms:seen:{roomId}
-                -- 5: rooms:active:zset
+                -- 1: rooms:{roomId}
+                -- 2: rooms:{roomId}:members
+                -- 3: rooms:{roomId}:pos
+                -- 4: rooms:{roomId}:seen
+                -- 5: rooms:active_list
                 -- 6: rooms:hot:zset
                 -- 7: rooms:public:zset
                 -- ARGV:
@@ -351,7 +351,7 @@ public class RedisScriptConfig {
                 redis.call('del', KEYS[4]) -- room seen users
 
                 -- Remove room from sorted sets
-                redis.call('zrem', KEYS[5], ARGV[1]) -- active rooms
+                redis.call('srem', KEYS[5], ARGV[1]) -- active rooms
                 redis.call('zrem', KEYS[6], ARGV[1]) -- hot rooms
                 redis.call('zrem', KEYS[7], ARGV[1]) -- public rooms
 
