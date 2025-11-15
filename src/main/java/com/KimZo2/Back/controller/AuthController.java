@@ -1,7 +1,6 @@
 package com.KimZo2.Back.controller;
 
 import com.KimZo2.Back.dto.auth.AdditionalSignupRequest;
-import com.KimZo2.Back.dto.auth.OAuthAccessTokenRequest;
 import com.KimZo2.Back.dto.member.LoginResponseDTO;
 import com.KimZo2.Back.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;

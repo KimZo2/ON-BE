@@ -2,23 +2,33 @@ package com.KimZo2.Back.service;
 
 import com.KimZo2.Back.dto.auth.*;
 import com.KimZo2.Back.dto.member.LoginResponseDTO;
-import com.KimZo2.Back.entity.User;
-import com.KimZo2.Back.exception.AdditionalSignupRequiredException;
+import com.KimZo2.Back.model.User;
+import com.KimZo2.Back.exception.login.AdditionalSignupRequiredException;
 import com.KimZo2.Back.repository.UserRepository;
-import com.KimZo2.Back.util.*;
+import com.KimZo2.Back.security.jwt.JwtUtil;
+import com.KimZo2.Back.util.GitHubUtil;
+import com.KimZo2.Back.util.GoogleUtil;
+import com.KimZo2.Back.util.KakaoUtil;
+import com.KimZo2.Back.util.NaverUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
+    @Value("${jwt.expiration_time}")
+    private int tokenExpireTime;
 
     private final KakaoUtil kakaoUtil;
     private final NaverUtil naverUtil;
@@ -98,9 +108,12 @@ public class AuthService {
 
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            String token = jwtUtil.generateToken(user.getNickname()); // 또는 user.getId()
+
+            String token = jwtUtil.createAccessToken(user.getId().toString(), user.getNickname(), user.getProvider());
+            long nowMills = System.currentTimeMillis() + tokenExpireTime * 1000L;
+
             response.setHeader("Authorization", token);
-            return new LoginResponseDTO(token, user.getNickname());
+            return new LoginResponseDTO(token, nowMills, user.getNickname());
         } else {
             throw new AdditionalSignupRequiredException(provider, providerId);
         }
@@ -132,5 +145,6 @@ public class AuthService {
 
         // user 저장
         userRepository.save(newUser);
+        log.info(newUser.toString());
     }
 }
