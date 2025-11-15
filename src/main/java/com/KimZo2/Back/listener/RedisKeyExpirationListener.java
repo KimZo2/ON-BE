@@ -41,18 +41,20 @@ public class RedisKeyExpirationListener implements MessageListener {
         else if (expiredKey.startsWith(KeyFactory.ROOM_META_PREFIX)) {
             String roomIdStr = expiredKey.substring(KeyFactory.ROOM_META_PREFIX.length());
 
-            try {
-                UUID roomId = UUID.fromString(roomIdStr);
-                System.out.println("방 만료 처리 (Room ID: " + roomIdStr + ")");
-                String topic = "/topic/room/" + roomIdStr + "/expiration";
-                msg.convertAndSend(topic, "방이 만료되었습니다.");
-                roomCleanUpRepository.deleteAllRoomData(roomId);
-            } catch (IllegalArgumentException e) {
-                // 유효하지 않은 UUID 형식의 키가 만료된 경우
-                log.warn("Invalid UUID format for expired key: {}", roomIdStr, e);
-            }  catch (Exception e) {
-                // Redis, Messaging 등 다른 모든 예외 처리
-                log.error("Error processing expired key: {}", expiredKey, e);
+            if (!roomIdStr.contains(":")) {
+                try {
+                    UUID roomId = UUID.fromString(roomIdStr);
+                    System.out.println("방 만료 처리 (Room ID: " + roomIdStr + ")");
+                    String topic = "/topic/room/" + roomIdStr + "/expiration";
+                    msg.convertAndSend(topic, "방이 만료되었습니다.");
+                    roomCleanUpRepository.deleteAllRoomData(roomId);
+                } catch (IllegalArgumentException e) {
+                    // 유효하지 않은 UUID 형식의 키가 만료된 경우
+                    log.warn("Invalid UUID format for expired key: {}", roomIdStr, e);
+                } catch (Exception e) {
+                    // Redis, Messaging 등 다른 모든 예외 처리
+                    log.error("Error processing expired key: {}", expiredKey, e);
+                }
             }
         }
     }
