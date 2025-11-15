@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class MoveCommand {
+    private String nickname;
+
     // 절대 좌표 모드
     private Double x;
     private Double y;

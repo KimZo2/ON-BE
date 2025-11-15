@@ -17,6 +17,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateUserIdException.class)
     public ResponseEntity<?> handleDuplicateUserId(DuplicateUserIdException e) {
+        log.warn("Duplicate User ID exception: {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT) // ResponseCode 409
                 .body(e.getMessage());
@@ -24,6 +25,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateUserNickNameException.class)
     public ResponseEntity<?> handleDuplicateNickName(DuplicateUserIdException e) {
+        log.warn("Duplicate User Nickname exception: {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT) // ResponseCode 409
                 .body(e.getMessage());
@@ -31,6 +33,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<?> handleUserNotFound(UserNotFoundException e) {
+        log.warn("User Not Found exception: {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(e.getMessage());
@@ -38,6 +41,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<?> handleInvalidPassword(InvalidPasswordException e) {
+        log.warn("Invalid Password exception: {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(e.getMessage());
@@ -45,7 +49,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AdditionalSignupRequiredException.class)
     public ResponseEntity<?> handleAdditionalSignupRequired(AdditionalSignupRequiredException e) {
-        log.warn("🚨 추가 회원가입 예외 발생: provider={}, id={}", e.getProvider(), e.getProviderId());
+        log.warn("Additional user registration exception: provider={}, id={}", e.getProvider(), e.getProviderId());
 
         return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED) // ResponseCode 428
                 .body(Map.of(
@@ -57,6 +61,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateKeyException.class)
     public ResponseEntity<?> handleDuplicateKeyException(DuplicateKeyException e) {
+        log.warn("Duplicate Key exception (e.g., nickname conflict): {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT) // 409
                 .body(Map.of("error", "이미 존재하는 닉네임입니다."));

@@ -21,16 +21,18 @@ class JoinRepositoryImpl implements JoinRepository {
     private final DefaultRedisScript<List> joinRoomLua;
 
     @Override
-    public JoinResult join(UUID roomId, UUID userId, String sessionId, int presenceTtlSec, int userRoomTtlSec, long nowMs) {
+    public JoinResult join(UUID roomId, UUID userId, String nickname, String sessionId, int presenceTtlSec, int userRoomTtlSec, long nowMs) {
         List<String> keys = List.of(
                 KeyFactory.roomMeta(roomId),
                 KeyFactory.roomMembers(roomId),
                 KeyFactory.userRoom(userId),
                 KeyFactory.presence(roomId, userId, sessionId),
-                KeyFactory.roomHot()
+                KeyFactory.roomHot(),
+                KeyFactory.roomNicknames(roomId)
         );
         List<String> argv = List.of(
                 String.valueOf(userId),
+                nickname,
                 String.valueOf(presenceTtlSec),
                 String.valueOf(userRoomTtlSec),
                 String.valueOf(nowMs)

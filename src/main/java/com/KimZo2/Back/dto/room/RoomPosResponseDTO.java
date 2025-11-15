@@ -9,6 +9,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RoomPosResponseDTO {
     private UUID userId;
+    private String nickname;
     private double x;
     private double y;
     private long seq;

@@ -35,5 +35,8 @@ public class RoomFunctionRepositoryImpl implements RoomFunctionRepository {
                 .reverseRangeByScore(key, from, now);
     }
 
-
+    @Override
+    public Set<String> allRoomIds() {
+        return redisTemplate.opsForSet().members(KeyFactory.roomActive());
+    }
 }

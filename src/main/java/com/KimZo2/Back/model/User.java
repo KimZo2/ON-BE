@@ -13,7 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter @Setter
 @Table(name = "users")
-@ToString
+@ToString(exclude = "rooms")
 public class User {
 
     @Id

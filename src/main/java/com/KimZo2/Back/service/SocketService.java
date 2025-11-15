@@ -1,14 +1,20 @@
 package com.KimZo2.Back.service;
 
+import com.KimZo2.Back.dto.logic.UserLeaveDTO;
 import com.KimZo2.Back.dto.room.JoinResult;
 import com.KimZo2.Back.dto.room.RoomEnterResponseDTO;
+import com.KimZo2.Back.exception.user.UserNotFoundException;
 import com.KimZo2.Back.exception.ws.BadPasswordException;
 import com.KimZo2.Back.exception.ws.RoomNotFoundOrExpiredException;
 import com.KimZo2.Back.model.Room;
+import com.KimZo2.Back.model.User;
 import com.KimZo2.Back.repository.RoomRepository;
+import com.KimZo2.Back.repository.UserRepository;
 import com.KimZo2.Back.repository.redis.JoinRepository;
+import com.KimZo2.Back.repository.redis.RoomCleanUpRepository;
 import com.KimZo2.Back.repository.redis.RoomFunctionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,13 +24,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SocketService {
-    private final RoomFunctionRepository roomFunctionRepository;
-    private final RoomRepository roomRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private final RoomRepository roomRepository;
+
     private final JoinRepository joinRepository;
+    private final UserRepository userRepository;
+    private final RoomCleanUpRepository roomCleanUpRepository;
+    private final RoomFunctionRepository roomFunctionRepository;
+
 
     private final SimpMessagingTemplate msg;
 
@@ -73,33 +85,38 @@ public class SocketService {
     public void joinRoom(UUID roomId, UUID userId, String sessionId) {
         long nowMs = System.currentTimeMillis();
         // 방 입장
-        JoinResult result = joinRepository.join(roomId, userId, sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+        JoinResult result = joinRepository.join(roomId, userId, user.getNickname(), sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
 
         switch (result.status()) {
             case OK -> {
                 // 브로드캐스트
-                msg.convertAndSend("/topic/room." + roomId + "/msg",
-                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
+                msg.convertAndSend("/topic/room/" + roomId + "/msg",
+                        new RoomEnterResponseDTO(roomId, "JOIN", userId.toString(), user.getNickname(), result.count()));
                 // 개인 응답
                 msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "JOIN", result.count()));
+                        new RoomEnterResponseDTO(roomId, "JOIN", userId.toString(), user.getNickname(), result.count()));
             }
-            case ALREADY -> {
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "ALREADY", result.count()));
-            }
-            case FULL -> {
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "FULL", result.count()));
-            }
-            case CLOSED_OR_NOT_FOUND -> {
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "CLOSED_OR_NOT_FOUND", result.count()));
-            }
-            default -> {
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "ERROR", result.count()));
-            }
+            case ALREADY, FULL, CLOSED_OR_NOT_FOUND, ERROR ->
+                    msg.convertAndSendToUser(userId.toString(), "/queue/join",
+                            new RoomEnterResponseDTO(roomId, "JOIN", userId.toString(), user.getNickname(), result.count()));
+        }
+    }
+
+    // 방 퇴장 로직
+    public void leaveRoom(UUID roomId, UUID userId){
+        Long result =  roomCleanUpRepository.cleanupExpiredUser(roomId, userId.toString());
+
+        if (result != null && result == 1) {
+            log.info("User {} explicitly left room {}.", userId, roomId);
+
+            // 3. 같은 방의 다른 유저들에게 퇴장 알림 메시지 전송
+            UserLeaveDTO payload = new UserLeaveDTO(userId.toString(), "SELF_LOGOUT");
+            String destination = "/topic/room/" + roomId + "/leave";
+
+            msg.convertAndSend(destination, payload);
+        } else {
+            log.warn("User {} leave request for room {} failed or user was already gone.", userId, roomId);
         }
     }
 }

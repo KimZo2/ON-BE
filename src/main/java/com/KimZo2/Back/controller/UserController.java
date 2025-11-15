@@ -21,8 +21,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/info")
-    public UserInfoResponseDTO getUserInfo(@AuthenticationPrincipal String id) {
-        UUID userId = UUID.fromString(id);
+    public UserInfoResponseDTO getUserInfo(@AuthenticationPrincipal String uuid) {
+        UUID userId = UUID.fromString(uuid);
         return userService.getUserId(userId);
     }
 }

@@ -10,4 +10,6 @@ public interface RoomFunctionRepository {
     boolean roomIsPrivate(UUID roomId);
 
     Set<String> roomRecentHot(long from, long now);
+
+    Set<String> allRoomIds();
 }
