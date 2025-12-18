@@ -1,8 +1,8 @@
-package com.KimZo2.Back.config;
+package com.KimZo2.Back.global.config;
 
-import com.KimZo2.Back.exception.ws.AccessDeniedException;
-import com.KimZo2.Back.exception.ws.BadDestinationException;
-import com.KimZo2.Back.repository.redis.MembersRepository;
+import com.KimZo2.Back.domain.user.repository.MembersRepository;
+import com.KimZo2.Back.global.exception.CustomException;
+import com.KimZo2.Back.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -34,7 +34,7 @@ public class SubscribeGuard implements ChannelInterceptor {
 
         if (StompCommand.SUBSCRIBE.equals(acc.getCommand())) {
             String dest = acc.getDestination();
-            if (dest == null) throw new BadDestinationException("Bad Destination");
+            if (dest == null) throw new CustomException(ErrorCode.INVALID_DESTINATION);
 
             if (dest.startsWith("/user/queue/join")) {
                 return message;
@@ -44,14 +44,14 @@ public class SubscribeGuard implements ChannelInterceptor {
             if (m.matches()) {
                 Principal principal = acc.getUser();
                 if (principal == null) {
-                    throw new AccessDeniedException("Unauthenticated SUBSCRIBE");
+                    throw new CustomException(ErrorCode.INVALID_DESTINATION);
                 }
 
                 UUID roomId = UUID.fromString(m.group(1));
                 String userId = principal.getName();
 
                 if (!membersRepository.isMember(roomId, userId)) {
-                    throw new AccessDeniedException("Not a member of room " + roomId);
+                    throw new CustomException(ErrorCode.ROOM_ACCESS_DENIED);
                 }
                 return message;
             }

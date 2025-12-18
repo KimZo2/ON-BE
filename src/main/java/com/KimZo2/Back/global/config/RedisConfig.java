@@ -1,4 +1,4 @@
-package com.KimZo2.Back.config;
+package com.KimZo2.Back.global.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

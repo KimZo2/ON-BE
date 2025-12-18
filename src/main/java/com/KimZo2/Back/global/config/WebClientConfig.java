@@ -1,4 +1,4 @@
-package com.KimZo2.Back.config;
+package com.KimZo2.Back.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

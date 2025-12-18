@@ -1,6 +1,6 @@
-package com.KimZo2.Back.config;
+package com.KimZo2.Back.global.config;
 
-import com.KimZo2.Back.security.jwt.JwtUtil;
+import com.KimZo2.Back.global.jwt.JwtUtil;
 import org.springframework.messaging.*;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -38,7 +38,7 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
                 token = token.substring(7);
             }
             // username 추출
-            String username = jwtUtil.getUserId(token);
+            String username = jwtUtil.extractUserId(token, false);
             accessor.setUser(
                     new UsernamePasswordAuthenticationToken(username, null, List.of())
             );

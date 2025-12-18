@@ -1,4 +1,4 @@
-package com.KimZo2.Back.config;
+package com.KimZo2.Back.global.config;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;

@@ -1,6 +1,6 @@
-package com.KimZo2.Back.config;
+package com.KimZo2.Back.global.config;
 
-import com.KimZo2.Back.security.jwt.JwtUtil;
+import com.KimZo2.Back.global.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
