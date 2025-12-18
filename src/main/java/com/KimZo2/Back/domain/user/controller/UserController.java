@@ -1,11 +1,8 @@
-package com.KimZo2.Back.controller;
+package com.KimZo2.Back.domain.user.controller;
 
-import com.KimZo2.Back.dto.member.UserInfoResponseDTO;
-import com.KimZo2.Back.security.model.CustomUserDetails;
-import com.KimZo2.Back.service.UserService;
+import com.KimZo2.Back.domain.auth.repository.UserInfoResponseDTO;
+import com.KimZo2.Back.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

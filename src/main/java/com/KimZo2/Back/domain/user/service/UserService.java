@@ -1,10 +1,9 @@
-package com.KimZo2.Back.service;
+package com.KimZo2.Back.domain.user.service;
 
-import com.KimZo2.Back.dto.member.UserInfoResponseDTO;
-import com.KimZo2.Back.exception.user.DuplicateUserNicknameException;
-import com.KimZo2.Back.exception.user.UserNotFoundException;
-import com.KimZo2.Back.model.User;
-import com.KimZo2.Back.repository.UserRepository;
+import com.KimZo2.Back.domain.auth.repository.UserInfoResponseDTO;
+import com.KimZo2.Back.global.exception.CustomException;
+import com.KimZo2.Back.global.entity.User;
+import com.KimZo2.Back.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+
+import static com.KimZo2.Back.global.exception.ErrorCode.DUPLICATE_NICKNAME;
+import static com.KimZo2.Back.global.exception.ErrorCode.USER_NOT_FOUND;
 
 @Service
 @Transactional(readOnly = true)
@@ -22,20 +24,18 @@ public class UserService {
     private final UserRepository userRepository;
 
     public void validateDuplicateNickName(User user) {
-        log.info("UserService - 닉네임 중복 검사 실행");
 
         if (userRepository.existsByNickname(user.getNickname())) {
-            throw new DuplicateUserNicknameException("Already exist nickname.");
+            throw new CustomException(DUPLICATE_NICKNAME);
         }
 
         userRepository.save(user);
     }
 
     public UserInfoResponseDTO getUserId(UUID userId) {
-        log.info("UserService - userId 검색");
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(("User not found.")));
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         return new UserInfoResponseDTO(
                 user.getId(),
