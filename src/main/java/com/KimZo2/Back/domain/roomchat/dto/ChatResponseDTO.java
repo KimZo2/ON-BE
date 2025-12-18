@@ -1,4 +1,4 @@
-package com.KimZo2.Back.dto.chat;
+package com.KimZo2.Back.domain.roomchat.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

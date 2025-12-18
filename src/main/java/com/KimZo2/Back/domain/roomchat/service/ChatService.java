@@ -1,14 +1,12 @@
-package com.KimZo2.Back.service;
+package com.KimZo2.Back.domain.roomchat.service;
 
-import com.KimZo2.Back.dto.chat.ChatRequestDTO;
-import com.KimZo2.Back.dto.chat.ChatResponseDTO;
-import com.KimZo2.Back.exception.chat.InvalidChatRequestException;
-import com.KimZo2.Back.exception.chat.InvalidRoomIdException;
-import com.KimZo2.Back.repository.redis.ChatRepository;
+import com.KimZo2.Back.domain.roomchat.dto.ChatRequestDTO;
+import com.KimZo2.Back.domain.roomchat.dto.ChatResponseDTO;
+import com.KimZo2.Back.global.exception.CustomException;
+import com.KimZo2.Back.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.UUID;
 
@@ -22,16 +20,11 @@ public class ChatService {
     public void chatRequest(UUID userId, UUID roomId, ChatRequestDTO dto) {
         // 기본 유효성 검사
         if (userId == null) {
-            throw new InvalidChatRequestException("User ID must not be null");
+            throw new CustomException(ErrorCode.INVALID_USER_ID);
         }
+
         if (roomId == null) {
-            throw new InvalidRoomIdException("Room ID must not be empty");
-        }
-        if (!StringUtils.hasText(dto.getNickname())) {
-            throw new InvalidChatRequestException("Nickname must not be empty");
-        }
-        if (!StringUtils.hasText(dto.getContent())) {
-            throw new InvalidChatRequestException("Chat content must not be empty");
+            throw new CustomException(ErrorCode.ROOM_ID_REQUIRED);
         }
 
         // ChatResponseDTO 생성
