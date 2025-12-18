@@ -1,4 +1,4 @@
-package com.KimZo2.Back.util;
+package com.KimZo2.Back.global.util;
 
 import java.util.UUID;
 

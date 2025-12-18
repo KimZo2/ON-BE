@@ -1,6 +1,6 @@
-package com.KimZo2.Back.util;
+package com.KimZo2.Back.global.util;
 
-import com.KimZo2.Back.dto.auth.GoogleDTO;
+import com.KimZo2.Back.domain.auth.dto.GoogleDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,6 @@
-package com.KimZo2.Back.util;
+package com.KimZo2.Back.global.util;
 
-import com.KimZo2.Back.dto.auth.KakaoDTO;
+import com.KimZo2.Back.domain.auth.dto.KakaoDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
