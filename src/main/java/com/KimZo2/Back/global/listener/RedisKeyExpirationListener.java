@@ -1,7 +1,7 @@
-package com.KimZo2.Back.listener;
+package com.KimZo2.Back.global.listener;
 
-import com.KimZo2.Back.repository.redis.RoomCleanUpRepository;
-import com.KimZo2.Back.util.KeyFactory;
+import com.KimZo2.Back.domain.roomparticipation.repository.RoomCleanUpRepository;
+import com.KimZo2.Back.global.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
