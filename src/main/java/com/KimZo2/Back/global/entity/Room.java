@@ -1,4 +1,4 @@
-package com.KimZo2.Back.model;
+package com.KimZo2.Back.global.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
