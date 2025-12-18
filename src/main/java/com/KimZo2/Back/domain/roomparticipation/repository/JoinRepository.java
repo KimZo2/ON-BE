@@ -1,6 +1,6 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.roomparticipation.repository;
 
-import com.KimZo2.Back.dto.room.JoinResult;
+import com.KimZo2.Back.domain.room.dto.JoinResult;
 
 import java.util.UUID;
 

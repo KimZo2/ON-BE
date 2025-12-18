@@ -1,14 +1,14 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.roomparticipation.repository;
 
-import com.KimZo2.Back.util.KeyFactory;
+import com.KimZo2.Back.global.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
-import com.KimZo2.Back.dto.room.JoinResult;
-import com.KimZo2.Back.dto.room.JoinResult.JoinStatus;
+import com.KimZo2.Back.domain.room.dto.JoinResult;
+import com.KimZo2.Back.domain.room.dto.JoinResult.JoinStatus;
 
 import java.util.List;
 import java.util.Objects;

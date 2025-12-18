@@ -1,4 +1,4 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.roomparticipation.repository;
 
 import java.util.UUID;
 

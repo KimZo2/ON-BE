@@ -1,18 +1,17 @@
-package com.KimZo2.Back.service;
+package com.KimZo2.Back.domain.roomparticipation.service;
 
-import com.KimZo2.Back.dto.logic.UserLeaveDTO;
-import com.KimZo2.Back.dto.room.JoinResult;
-import com.KimZo2.Back.dto.room.RoomEnterResponseDTO;
-import com.KimZo2.Back.exception.user.UserNotFoundException;
-import com.KimZo2.Back.exception.ws.BadPasswordException;
-import com.KimZo2.Back.exception.ws.RoomNotFoundOrExpiredException;
-import com.KimZo2.Back.model.Room;
-import com.KimZo2.Back.model.User;
-import com.KimZo2.Back.repository.RoomRepository;
-import com.KimZo2.Back.repository.UserRepository;
-import com.KimZo2.Back.repository.redis.JoinRepository;
-import com.KimZo2.Back.repository.redis.RoomCleanUpRepository;
-import com.KimZo2.Back.repository.redis.RoomFunctionRepository;
+import com.KimZo2.Back.domain.roomlogic.dto.UserLeaveDTO;
+import com.KimZo2.Back.domain.room.dto.JoinResult;
+import com.KimZo2.Back.domain.room.dto.RoomEnterResponseDTO;
+import com.KimZo2.Back.global.exception.CustomException;
+import com.KimZo2.Back.global.exception.ErrorCode;
+import com.KimZo2.Back.global.entity.Room;
+import com.KimZo2.Back.global.entity.User;
+import com.KimZo2.Back.domain.room.repository.RoomRepository;
+import com.KimZo2.Back.domain.user.repository.UserRepository;
+import com.KimZo2.Back.domain.roomparticipation.repository.JoinRepository;
+import com.KimZo2.Back.domain.roomparticipation.repository.RoomCleanUpRepository;
+import com.KimZo2.Back.domain.roomparticipation.repository.RoomFunctionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +26,7 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class SocketService {
+public class ParticipationService {
     private final PasswordEncoder passwordEncoder;
 
     private final RoomRepository roomRepository;
@@ -50,7 +49,7 @@ public class SocketService {
 
         // 방 ID를 기준으로 방 찾기
         if (!roomFunctionRepository.roomExists(roomId)) {
-            throw new RoomNotFoundOrExpiredException("방이 존재하지 않거나 만료되었습니다.");
+            throw new CustomException(ErrorCode.ROOM_NOT_FOUND_OR_EXPIRED);
         }
 
         // 만약 방이 private이라면 비밀번호 요구  -> PostGre에서 검증하기
@@ -62,22 +61,22 @@ public class SocketService {
     // 방 비밀번호 조회
     private void checkPassword(String roomPW, UUID roomId) {
         if (roomPW == null || roomPW.isBlank()) {
-            throw new BadPasswordException("비밀번호가 필요합니다.");
+            throw new CustomException(ErrorCode.PASSWORD_REQUIRED_FOR_PRIVATE_ROOM);
         }
         // 방 ID를 기준으로 방 찾기
         Room roomEntity = roomRepository.findById(roomId)
-                .orElseThrow(() -> new BadPasswordException("방 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND_OR_EXPIRED));
 
         // 종료된 방인지 확인
         if (!roomEntity.isStatus()) {
-            throw new BadPasswordException("이미 종료된 방입니다.");
+            throw new CustomException(ErrorCode.ROOM_NOT_FOUND_OR_EXPIRED);
         }
 
         // room 비밀번호 가져오기
         String hash = roomEntity.getPassword();
         // 비밀번호 확인
         if (hash == null || !passwordEncoder.matches(roomPW, hash)) {
-            throw new BadPasswordException("비밀번호가 올바르지 않습니다.");
+            throw new CustomException(ErrorCode.INVALID_ROOM_PASSWORD);
         }
     }
 
@@ -85,7 +84,7 @@ public class SocketService {
     public void joinRoom(UUID roomId, UUID userId, String sessionId) {
         long nowMs = System.currentTimeMillis();
         // 방 입장
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         JoinResult result = joinRepository.join(roomId, userId, user.getNickname(), sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
 
         switch (result.status()) {
