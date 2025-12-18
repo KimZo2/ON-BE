@@ -1,9 +1,9 @@
-package com.KimZo2.Back.controller;
+package com.KimZo2.Back.domain.roomlogic.controller;
 
-import com.KimZo2.Back.dto.logic.MoveCommand;
-import com.KimZo2.Back.dto.logic.PingRequest;
-import com.KimZo2.Back.dto.logic.Snapshot;
-import com.KimZo2.Back.service.LogicService;
+import com.KimZo2.Back.domain.roomlogic.dto.MoveCommand;
+import com.KimZo2.Back.domain.roomlogic.dto.PingRequest;
+import com.KimZo2.Back.domain.roomlogic.dto.Snapshot;
+import com.KimZo2.Back.domain.roomlogic.service.LogicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;

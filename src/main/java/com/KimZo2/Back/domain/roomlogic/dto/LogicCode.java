@@ -1,4 +1,4 @@
-package com.KimZo2.Back.dto.logic;
+package com.KimZo2.Back.domain.roomlogic.dto;
 
 public enum LogicCode {
     OK,

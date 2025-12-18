@@ -1,6 +1,6 @@
-package com.KimZo2.Back.dto.logic;
+package com.KimZo2.Back.domain.roomlogic.dto;
 
-import com.KimZo2.Back.dto.room.RoomPosResponseDTO;
+import com.KimZo2.Back.domain.room.dto.RoomPosResponseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

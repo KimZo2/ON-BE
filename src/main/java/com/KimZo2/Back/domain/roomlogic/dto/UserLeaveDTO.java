@@ -1,10 +1,7 @@
-package com.KimZo2.Back.dto.logic;
+package com.KimZo2.Back.domain.roomlogic.dto;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-
-import java.util.UUID;
 
 @Getter
 @RequiredArgsConstructor

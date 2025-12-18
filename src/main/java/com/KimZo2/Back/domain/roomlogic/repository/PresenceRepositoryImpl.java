@@ -1,6 +1,6 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.roomlogic.repository;
 
-import com.KimZo2.Back.util.KeyFactory;
+import com.KimZo2.Back.global.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;

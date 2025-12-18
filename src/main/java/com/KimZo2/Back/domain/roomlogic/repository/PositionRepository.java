@@ -1,6 +1,6 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.roomlogic.repository;
 
-import com.KimZo2.Back.dto.room.RoomPosResponseDTO;
+import com.KimZo2.Back.domain.room.dto.RoomPosResponseDTO;
 
 import java.util.List;
 import java.util.UUID;

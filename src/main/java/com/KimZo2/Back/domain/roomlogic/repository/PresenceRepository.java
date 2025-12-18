@@ -1,4 +1,4 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.roomlogic.repository;
 
 import java.util.Set;
 import java.util.UUID;

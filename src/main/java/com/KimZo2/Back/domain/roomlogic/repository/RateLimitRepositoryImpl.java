@@ -1,4 +1,4 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.roomlogic.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

@@ -1,10 +1,13 @@
-package com.KimZo2.Back.service;
+package com.KimZo2.Back.domain.roomlogic.service;
 
-import com.KimZo2.Back.dto.logic.*;
-import com.KimZo2.Back.dto.room.RoomPosResponseDTO;
-import com.KimZo2.Back.repository.redis.PositionRepository;
-import com.KimZo2.Back.repository.redis.PresenceRepository;
-import com.KimZo2.Back.repository.redis.RateLimitRepository;
+import com.KimZo2.Back.domain.roomlogic.dto.LogicCode;
+import com.KimZo2.Back.domain.roomlogic.dto.MoveAck;
+import com.KimZo2.Back.domain.roomlogic.dto.MoveCommand;
+import com.KimZo2.Back.domain.roomlogic.dto.Snapshot;
+import com.KimZo2.Back.domain.room.dto.RoomPosResponseDTO;
+import com.KimZo2.Back.domain.roomlogic.repository.PositionRepository;
+import com.KimZo2.Back.domain.roomlogic.repository.PresenceRepository;
+import com.KimZo2.Back.domain.roomlogic.repository.RateLimitRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
