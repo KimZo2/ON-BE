@@ -1,4 +1,4 @@
-package com.KimZo2.Back.dto.room;
+package com.KimZo2.Back.domain.room.dto;
 
 public record RoomListItemResponse(
         String roomId,

@@ -1,4 +1,4 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.room.repository;
 
 import java.util.Collection;
 import java.util.List;

@@ -1,18 +1,16 @@
-package com.KimZo2.Back.service;
+package com.KimZo2.Back.domain.room.service;
 
-import com.KimZo2.Back.dto.room.RoomCreateDTO;
-import com.KimZo2.Back.dto.room.RoomListItemResponse;
-import com.KimZo2.Back.dto.room.RoomPageResponse;
-import com.KimZo2.Back.exception.login.UserNotFoundException;
-import com.KimZo2.Back.exception.room.DuplicateRoomNameException;
-import com.KimZo2.Back.exception.room.PasswordNotIncludeException;
-import com.KimZo2.Back.exception.room.RoomStoreFailException;
-import com.KimZo2.Back.model.Room;
-import com.KimZo2.Back.model.User;
-import com.KimZo2.Back.repository.RoomRepository;
-import com.KimZo2.Back.repository.UserRepository;
-import com.KimZo2.Back.repository.redis.RoomListRepository;
-import com.KimZo2.Back.repository.redis.RoomStoreRepository;
+import com.KimZo2.Back.domain.room.dto.RoomCreateDTO;
+import com.KimZo2.Back.domain.room.dto.RoomListItemResponse;
+import com.KimZo2.Back.domain.room.dto.RoomPageResponse;
+import com.KimZo2.Back.global.exception.CustomException;
+import com.KimZo2.Back.global.exception.ErrorCode;
+import com.KimZo2.Back.global.entity.Room;
+import com.KimZo2.Back.global.entity.User;
+import com.KimZo2.Back.domain.room.repository.RoomRepository;
+import com.KimZo2.Back.domain.user.repository.UserRepository;
+import com.KimZo2.Back.domain.room.repository.RoomListRepository;
+import com.KimZo2.Back.domain.room.repository.RoomStoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,12 +36,12 @@ public class RoomService {
 
     // 방 생성 -> PostGre랑 Redis에 모두 저장 필요
     @Transactional
-    public UUID createRoom(RoomCreateDTO dto) {
+    public String createRoom(RoomCreateDTO dto) {
         String creatorNickname = dto.getCreatorNickname();
 
         // user 정보 찾기
         User creator = userRepository.findByNickname(creatorNickname);
-        if(creator == null) throw new UserNotFoundException("사용자를 찾을 수 없습니다.");
+        if(creator == null) throw new CustomException(ErrorCode.USER_NOT_FOUND);
 
         // roomId 생성
         UUID roomId = UUID.randomUUID();
@@ -54,7 +52,7 @@ public class RoomService {
         // 활성화 되어 있는 방 중 중복 이름 판단 - Redis
         String roomName = dto.getName().trim().toLowerCase(Locale.ROOT); // 소문자/대문자/띄어쓰기 방 이름 모두 중복 판단
         if(!validateDuplicatedRoomName(roomName, roomId, roomTTL)){
-            throw new DuplicateRoomNameException("이미 활성화된 같은 이름의 방이 있습니다.");
+            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
         // PostGre 레코드 생성
@@ -70,7 +68,7 @@ public class RoomService {
         // room private, 비밀번호 Encode 설정
         if(dto.isPrivate()) {
             String pwdRaw = dto.getPassword();
-            if(pwdRaw == null || pwdRaw.isBlank()) throw new PasswordNotIncludeException("비밀방 비밀번호 필요");
+            if(pwdRaw == null || pwdRaw.isBlank()) throw new CustomException(ErrorCode.PASSWORD_REQUIRED_FOR_PRIVATE_ROOM);
             newRoom.makePrivate(passwordEncoder.encode(pwdRaw));
         }
 
@@ -91,12 +89,12 @@ public class RoomService {
                     now
             );
 
-            return roomId;
-        } catch (RoomStoreFailException e) {
+            return "방 생성 완료";
+        } catch (Exception e) {
             roomStoreRepository.releaseNameLock(roomName);
             roomStoreRepository.deleteRoomRuntimeIfPresent(roomId);
             log.error("Failed to create room with name '{}'", roomName, e);
-            throw new RoomStoreFailException("방 생성에 실패했습니다.");
+            throw new CustomException(ErrorCode.ROOM_CREATION_FAILED);
         }
     }
 
@@ -107,7 +105,6 @@ public class RoomService {
 
     // 방 조회
     public RoomPageResponse searchRoom(int page, int size){
-        log.info("RoomService - searchRoom  -  실행");
 
         // page와 size 정규화
         int p = Math.max(page, 1);
@@ -117,7 +114,6 @@ public class RoomService {
         long total = roomListRepository.countPublic();
         // 만약 public 방이 0개라면 list 0개 return
         if (total == 0) {
-            log.info("RoomService - RoomPageResponse : total == 0");
             return new RoomPageResponse(1, s, 0, false, List.of());
         }
 

@@ -1,6 +1,6 @@
-package com.KimZo2.Back.repository;
+package com.KimZo2.Back.domain.room.repository;
 
-import com.KimZo2.Back.model.Room;
+import com.KimZo2.Back.global.entity.Room;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
