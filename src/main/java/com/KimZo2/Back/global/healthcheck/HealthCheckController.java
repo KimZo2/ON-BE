@@ -1,4 +1,4 @@
-package com.KimZo2.Back.controller;
+package com.KimZo2.Back.global.healthcheck;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
