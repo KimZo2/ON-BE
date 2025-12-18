@@ -1,4 +1,4 @@
-package com.KimZo2.Back.dto.member;
+package com.KimZo2.Back.domain.auth.repository;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

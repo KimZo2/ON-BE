@@ -1,5 +1,8 @@
-package com.KimZo2.Back.exception.login;
+package com.KimZo2.Back.domain.auth.exception;
 
+import lombok.Getter;
+
+@Getter
 public class AdditionalSignupRequiredException extends RuntimeException {
     private final String provider;
     private final String providerId;
@@ -10,6 +13,4 @@ public class AdditionalSignupRequiredException extends RuntimeException {
         this.providerId = providerId;
     }
 
-    public String getProvider() { return provider; }
-    public String getProviderId() { return providerId; }
 }

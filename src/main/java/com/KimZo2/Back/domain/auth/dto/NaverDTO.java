@@ -1,4 +1,4 @@
-package com.KimZo2.Back.dto.auth;
+package com.KimZo2.Back.domain.auth.dto;
 
 import lombok.Getter;
 

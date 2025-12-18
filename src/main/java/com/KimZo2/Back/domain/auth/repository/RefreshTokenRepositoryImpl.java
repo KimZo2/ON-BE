@@ -1,4 +1,4 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.auth.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;

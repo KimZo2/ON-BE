@@ -1,4 +1,4 @@
-package com.KimZo2.Back.repository.redis;
+package com.KimZo2.Back.domain.auth.repository;
 
 public interface RefreshTokenRepository {
     void save(String userId, String refreshToken, long expirationSeconds);
