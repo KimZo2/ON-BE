@@ -24,14 +24,21 @@ public class GlobalExceptionHandler {
      * @return 428 PRECONDITION_REQUIRED
      */
     @ExceptionHandler(AdditionalSignupRequiredException.class)
-    public ResponseEntity<?> handleAdditionalSignupRequired(AdditionalSignupRequiredException e) {
-        log.warn("Additional user registration exception: provider={}, id={}", e.getProvider(), e.getProviderId());
+    protected ResponseEntity<ApiResponse<Map<String, String>>> handleAdditionalSignupRequired(AdditionalSignupRequiredException e) {
+        ErrorCode errorCode = e.getErrorCode();
 
-        return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED) // ResponseCode 428
-                .body(Map.of(
-                        "provider", e.getProvider(),
-                        "providerId", e.getProviderId()
-                ));
+        log.warn("Additional Signup Required: {} - provider={}, id={}",
+                errorCode.getCode(), e.getProvider(), e.getProviderId());
+
+        Map<String, String> data = Map.of(
+                "provider", e.getProvider(),
+                "providerId", e.getProviderId()
+        );
+
+        return new ResponseEntity<>(
+                ApiResponse.onFailure(data, errorCode.getCode(), errorCode.getMessage()),
+                errorCode.getStatus()
+        );
     }
 
 

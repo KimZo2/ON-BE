@@ -42,4 +42,8 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> onFailure(String code, String message) {
         return new ApiResponse<>(false, null, new ErrorResponse(code, message));
     }
+
+    public static <T> ApiResponse<T> onFailure( T data, String code, String message) {
+        return new ApiResponse<>(false, data, new ErrorResponse(code, message));
+    }
 }
