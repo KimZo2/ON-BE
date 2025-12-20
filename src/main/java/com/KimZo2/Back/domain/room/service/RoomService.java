@@ -52,7 +52,7 @@ public class RoomService {
         // 활성화 되어 있는 방 중 중복 이름 판단 - Redis
         String roomName = dto.getName().trim().toLowerCase(Locale.ROOT); // 소문자/대문자/띄어쓰기 방 이름 모두 중복 판단
         if(!validateDuplicatedRoomName(roomName, roomId, roomTTL)){
-            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+            throw new CustomException(ErrorCode.DUPLICATE_ROOM_NAME);
         }
 
         // PostGre 레코드 생성

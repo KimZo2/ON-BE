@@ -13,6 +13,6 @@ public class ChatRequestDTO {
     @NotBlank
     String content;
 
-    @NotBlank
+    @jakarta.validation.constraints.NotNull
     long timestamp;
 }

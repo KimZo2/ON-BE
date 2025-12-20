@@ -2,7 +2,9 @@ package com.KimZo2.Back.domain.roomchat.controller;
 
 import com.KimZo2.Back.domain.roomchat.dto.ChatRequestDTO;
 import com.KimZo2.Back.domain.roomchat.service.ChatService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -20,7 +22,7 @@ public class ChatController {
     @MessageMapping("room/{roomId}/chat")
     public void chatRequest(@DestinationVariable UUID roomId,
                             Principal principal,
-                            @Payload ChatRequestDTO dto){
+                            @Payload @Valid ChatRequestDTO dto){
         UUID userId = UUID.fromString(principal.getName());
 
         chatService.chatRequest(userId, roomId, dto);

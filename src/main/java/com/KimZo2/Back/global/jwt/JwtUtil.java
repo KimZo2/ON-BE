@@ -126,7 +126,7 @@ public class JwtUtil {
 
     public boolean validate(String token, Key key) {
         if (token == null || token.trim().isEmpty()) {
-
+            throw new CustomException(ErrorCode.EMPTY_TOKEN_ERROR);
         }
         try {
             Jwts.parser()

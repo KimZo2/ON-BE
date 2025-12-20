@@ -9,6 +9,7 @@ import com.KimZo2.Back.global.exception.CustomException;
 import com.KimZo2.Back.domain.auth.exception.AdditionalSignupRequiredException;
 import com.KimZo2.Back.domain.user.repository.UserRepository;
 import com.KimZo2.Back.domain.auth.repository.RefreshTokenRepository;
+import com.KimZo2.Back.global.exception.ErrorCode;
 import com.KimZo2.Back.global.jwt.JwtUtil;
 import com.KimZo2.Back.global.util.GitHubUtil;
 import com.KimZo2.Back.global.util.GoogleUtil;
@@ -139,7 +140,7 @@ public class AuthService {
             return new LoginResponseDTO(accessToken, nowMills, user.getNickname());
         } else {
             // 회원 정보가 없어 추가 회원 정보를 받아야하는 경우
-            throw new AdditionalSignupRequiredException(provider, providerId);
+            throw new AdditionalSignupRequiredException(ErrorCode.ADDITIONAL_SIGNUP_REQUIRED, provider, providerId);
         }
     }
 

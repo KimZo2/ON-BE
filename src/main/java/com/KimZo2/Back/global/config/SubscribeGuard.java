@@ -44,7 +44,7 @@ public class SubscribeGuard implements ChannelInterceptor {
             if (m.matches()) {
                 Principal principal = acc.getUser();
                 if (principal == null) {
-                    throw new CustomException(ErrorCode.INVALID_DESTINATION);
+                    throw new CustomException(ErrorCode.NOT_LOGIN_USER);
                 }
 
                 UUID roomId = UUID.fromString(m.group(1));
