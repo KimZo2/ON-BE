@@ -1,9 +1,12 @@
 package com.KimZo2.Back.global.util;
 
 import com.KimZo2.Back.domain.auth.dto.KakaoDTO;
+import com.KimZo2.Back.global.exception.CustomException;
+import com.KimZo2.Back.global.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -54,7 +57,7 @@ public class KakaoUtil {
                 .onStatus(HttpStatusCode::isError, res ->
                         res.bodyToMono(String.class).doOnNext(errorBody ->
                                 log.error("카카오 토큰 요청 실패: {}", errorBody)
-                        ).then(Mono.error(new RuntimeException("토큰 요청 실패")))
+                        ).then(Mono.error(new CustomException(ErrorCode.TOKEN_REQUEST_FAILED)))
                 )
                 .bodyToMono(KakaoDTO.OAuthToken.class)
                 .block();

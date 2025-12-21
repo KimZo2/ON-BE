@@ -2,6 +2,7 @@ package com.KimZo2.Back.global.exception;
 
 import com.KimZo2.Back.global.dto.ApiResponse;
 import com.KimZo2.Back.domain.auth.exception.AdditionalSignupRequiredException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,6 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     /**
-     *
      *
      * @param e AdditionalSignupRequiredException
      * @return 428 PRECONDITION_REQUIRED
@@ -41,7 +41,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-
     /**
      * @Valid 어노테이션을 사용한 DTO의 유효성 검증 실패 시 발생하는 예외를 처리합니다.
      *
@@ -55,9 +54,30 @@ public class GlobalExceptionHandler {
 
         // 유효성 검증 실패 메시지를 동적으로 생성
         String errorMessage = (fieldError != null) ? fieldError.getDefaultMessage() : ErrorCode.INVALID_INPUT_VALUE.getMessage();
-        log.warn("MethodArgumentNotValidException: {}", errorMessage);
+        log.warn("MethodArgumentNotValidException(DTO Validation Failed): {}", errorMessage);
 
         ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
+        return new ResponseEntity<>(
+                ApiResponse.onFailure(errorCode.getCode(), errorMessage),
+                errorCode.getStatus()
+        );
+    }
+
+    // @RequestParam, @PathVariable 검증 실패 시 발생하는 예외 처리 (@Validated)
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(ConstraintViolationException e) {
+        // 에러 메시지 추출 ("searchRoom.size: 사이즈는 최대 6까지 가능합니다." 같은 형태임)
+        // 깔끔하게 메시지만 보여주기 위해 파싱하거나 e.getMessage()를 그대로 씁니다.
+        String errorMessage = e.getMessage();
+
+        // "searchRoom.size: " 같은 앞부분을 떼고 싶다면 아래 로직 사용 (선택 사항)
+        if (errorMessage.contains(": ")) {
+            errorMessage = errorMessage.split(": ")[1];
+        }
+
+        log.warn("ConstraintViolationException(Parameter Validation Failed): {}", errorMessage);
+
+        ErrorCode errorCode = ErrorCode.INVALID_PAGE_SIZE;
         return new ResponseEntity<>(
                 ApiResponse.onFailure(errorCode.getCode(), errorMessage),
                 errorCode.getStatus()
