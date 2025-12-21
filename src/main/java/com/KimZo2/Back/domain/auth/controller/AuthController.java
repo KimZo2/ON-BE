@@ -4,6 +4,7 @@ import com.KimZo2.Back.domain.auth.dto.AdditionalSignupRequest;
 import com.KimZo2.Back.global.dto.ApiResponse;
 import com.KimZo2.Back.domain.auth.repository.LoginResponseDTO;
 import com.KimZo2.Back.domain.auth.service.AuthService;
+import com.KimZo2.Back.global.exception.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -44,12 +45,12 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "428",
                     description = "추가 회원가입 정보 필요 (AUTH_001)",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+                    content = @Content(schema = @Schema(implementation = ErrorCode.class))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
-                    description = "인증 실패 (유효하지 않은 코드 등)",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+                    description = "인증 실패 (유효하지 않은 코드 등) (AUTH_005)",
+                    content = @Content(schema = @Schema(implementation = ErrorCode.class))
             )
     })
     @GetMapping("/login/kakao")
@@ -121,11 +122,32 @@ public class AuthController {
 //    }
 
 
-    @Operation(summary = "회원가입", description = "필요한 정보를 더 받아 로그인 합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원가입 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "닉네임 중복 실패"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "회원가입 실패")
+    @Operation(
+            summary = "추가 회원가입",
+            description = "OAuth 로그인 시 **428 에러(정보 부족)**를 받은 경우, 이 API를 통해 **추가 정보(닉네임 등)**를 입력하여 가입을 완료합니다.<br>" +
+                    "가입이 성공하면 **200 OK** 상태와 함께 성공 메시지가 반환됩니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "회원가입 성공",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "입력값 유효성 검증 실패 (예: '닉네임은 필수입니다.', '생년월일 형식이 올바르지 않습니다.')",
+                    content = @Content(schema = @Schema(implementation = ErrorCode.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "닉네임 중복 (AUTH_003)",
+                    content = @Content(schema = @Schema(implementation = ErrorCode.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "입력값 형식 오류 (닉네임 누락 등)",
+                    content = @Content(schema = @Schema(implementation = ErrorCode.class))
+            )
     })
     @PostMapping("/signup")
     public ApiResponse<?> OAuthSignup(@RequestBody AdditionalSignupRequest dto,

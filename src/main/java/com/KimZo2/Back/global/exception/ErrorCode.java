@@ -13,6 +13,7 @@ public enum ErrorCode {
 
     // Common Exception
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "COMMON_001", "입력값이 유효하지 않습니다."),
+    INVALID_PAGE_SIZE(HttpStatus.BAD_REQUEST, "COMMON_002", "페이지 번호나 크기가 올바르지 않습니다. (size는 최대 6)"),
 
     // spring security exception
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "SECURITY_001", "접근권한이 없습니다."),
@@ -32,7 +33,14 @@ public enum ErrorCode {
     ADDITIONAL_SIGNUP_REQUIRED(HttpStatus.PRECONDITION_REQUIRED, "AUTH_001", "추가 회원가입 정보가 필요합니다."),
     DUPLICATE_USERID(HttpStatus.CONFLICT, "AUTH_002", "이미 존재하는 아이디입니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "AUTH_003", "이미 존재하는 닉네임입니다."),
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH_005", "존재하지 않는 사용자입니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH_004", "존재하지 않는 사용자입니다."),
+    TOKEN_REQUEST_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_005", "토큰(Code) 요청에 실패했습니다."),
+
+    // signup exception
+    INVALID_SIGNUP_REQUEST(HttpStatus.BAD_REQUEST, "SIGNUP_001", "회원가입 요청 정보가 올바르지 않습니다."), // 포괄적
+    AGREEMENT_REQUIRED(HttpStatus.BAD_REQUEST, "SIGNUP_002", "약관 동의는 필수입니다."),
+    INVALID_NICKNAME_FORMAT(HttpStatus.BAD_REQUEST, "SIGNUP_003", "닉네임 형식이 올바르지 않습니다."),
+    INVALID_BIRTHDAY_FORMAT(HttpStatus.BAD_REQUEST, "SIGNUP_004", "생년월일 형식이 올바르지 않습니다."),
 
     // room exception
     DUPLICATE_ROOM_NAME(HttpStatus.CONFLICT, "ROOM_001", "이미 존재하는 방 이름입니다."),
