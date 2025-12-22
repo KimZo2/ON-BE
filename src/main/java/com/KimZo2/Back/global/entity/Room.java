@@ -45,6 +45,7 @@ public class Room {
     @JoinColumn(name = "creator_id")
     private User creator;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean status = true;
 

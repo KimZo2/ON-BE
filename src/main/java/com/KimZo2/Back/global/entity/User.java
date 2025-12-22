@@ -42,6 +42,7 @@ public class User implements UserDetails {
     private boolean agreement;
 
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<Room> rooms = new ArrayList<>();
 
     // 연관 관계 메서드

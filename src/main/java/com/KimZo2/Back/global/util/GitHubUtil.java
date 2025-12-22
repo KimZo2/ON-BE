@@ -1,6 +1,6 @@
 package com.KimZo2.Back.global.util;
 
-import com.KimZo2.Back.domain.dto.auth.GitHubDTO;
+import com.KimZo2.Back.domain.auth.dto.GitHubDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
