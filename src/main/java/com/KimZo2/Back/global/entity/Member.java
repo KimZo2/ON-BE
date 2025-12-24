@@ -3,6 +3,7 @@ package com.KimZo2.Back.global.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
@@ -15,9 +16,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @Setter
-@Table(name = "users")
+@Table(name = "members")
 @ToString(exclude = "rooms")
-public class User implements UserDetails {
+public class Member implements UserDetails {
 
     @Id
     @GeneratedValue
@@ -29,16 +30,19 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String providerId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String name;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @Column(nullable = true)
     private String nickname;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String birthday;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private boolean agreement;
 
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL)
@@ -53,7 +57,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     @Override
