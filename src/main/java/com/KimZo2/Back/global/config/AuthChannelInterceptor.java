@@ -38,7 +38,7 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
                 token = token.substring(7);
             }
             // username 추출
-            String username = jwtUtil.extractUserId(token, false);
+            String username = jwtUtil.extractMemberId(token, false);
             accessor.setUser(
                     new UsernamePasswordAuthenticationToken(username, null, List.of())
             );
