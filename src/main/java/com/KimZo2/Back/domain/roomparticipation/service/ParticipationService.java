@@ -1,14 +1,14 @@
 package com.KimZo2.Back.domain.roomparticipation.service;
 
+import com.KimZo2.Back.domain.member.repository.MemberRepository;
 import com.KimZo2.Back.domain.roomlogic.dto.UserLeaveDTO;
 import com.KimZo2.Back.domain.room.dto.JoinResult;
 import com.KimZo2.Back.domain.room.dto.RoomEnterResponseDTO;
+import com.KimZo2.Back.global.entity.Member;
 import com.KimZo2.Back.global.exception.CustomException;
 import com.KimZo2.Back.global.exception.ErrorCode;
 import com.KimZo2.Back.global.entity.Room;
-import com.KimZo2.Back.global.entity.User;
 import com.KimZo2.Back.domain.room.repository.RoomRepository;
-import com.KimZo2.Back.domain.user.repository.UserRepository;
 import com.KimZo2.Back.domain.roomparticipation.repository.JoinRepository;
 import com.KimZo2.Back.domain.roomparticipation.repository.RoomCleanUpRepository;
 import com.KimZo2.Back.domain.roomparticipation.repository.RoomFunctionRepository;
@@ -32,7 +32,7 @@ public class ParticipationService {
     private final RoomRepository roomRepository;
 
     private final JoinRepository joinRepository;
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
     private final RoomCleanUpRepository roomCleanUpRepository;
     private final RoomFunctionRepository roomFunctionRepository;
 
@@ -84,7 +84,7 @@ public class ParticipationService {
     public void joinRoom(UUID roomId, UUID userId, String sessionId) {
         long nowMs = System.currentTimeMillis();
         // 방 입장
-        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Member user = memberRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         JoinResult result = joinRepository.join(roomId, userId, user.getNickname(), sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
 
         switch (result.status()) {

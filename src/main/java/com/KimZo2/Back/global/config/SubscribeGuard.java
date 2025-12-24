@@ -1,6 +1,6 @@
 package com.KimZo2.Back.global.config;
 
-import com.KimZo2.Back.domain.user.repository.MembersRepository;
+import com.KimZo2.Back.domain.member.repository.MembersRepository;
 import com.KimZo2.Back.global.exception.CustomException;
 import com.KimZo2.Back.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
