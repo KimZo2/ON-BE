@@ -1,4 +1,4 @@
-package com.KimZo2.Back.domain.user.repository;
+package com.KimZo2.Back.domain.member.repository;
 
 import java.util.UUID;
 

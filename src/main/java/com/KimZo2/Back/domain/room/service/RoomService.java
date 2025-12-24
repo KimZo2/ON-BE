@@ -1,14 +1,14 @@
 package com.KimZo2.Back.domain.room.service;
 
+import com.KimZo2.Back.domain.member.repository.MemberRepository;
 import com.KimZo2.Back.domain.room.dto.RoomCreateDTO;
 import com.KimZo2.Back.domain.room.dto.RoomListItemResponse;
 import com.KimZo2.Back.domain.room.dto.RoomPageResponse;
+import com.KimZo2.Back.global.entity.Member;
 import com.KimZo2.Back.global.exception.CustomException;
 import com.KimZo2.Back.global.exception.ErrorCode;
 import com.KimZo2.Back.global.entity.Room;
-import com.KimZo2.Back.global.entity.User;
 import com.KimZo2.Back.domain.room.repository.RoomRepository;
-import com.KimZo2.Back.domain.user.repository.UserRepository;
 import com.KimZo2.Back.domain.room.repository.RoomListRepository;
 import com.KimZo2.Back.domain.room.repository.RoomStoreRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class RoomService {
     private static final Logger log = LoggerFactory.getLogger(RoomService.class);
 
 
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoomRepository roomRepository;
     private final RoomStoreRepository roomStoreRepository;
@@ -40,8 +40,8 @@ public class RoomService {
         String creatorNickname = dto.getCreatorNickname();
 
         // user 정보 찾기
-        User creator = userRepository.findByNickname(creatorNickname);
-        if(creator == null) throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        Member creator = memberRepository.findByNickname(creatorNickname);
+        if(creator == null) throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
 
         // roomId 생성
         UUID roomId = UUID.randomUUID();
