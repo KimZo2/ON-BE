@@ -28,13 +28,17 @@ public enum ErrorCode {
     TOKEN_PARSING_FAILED(HttpStatus.UNAUTHORIZED, "JWT_005", "유효하지 않은 토큰 (파싱 실패)"),
     INVALID_TOKEN_SIGNATURE(HttpStatus.FORBIDDEN, "JWT_006", "JWT 서명 검증에 실패했습니다."),
     INVALID_TOKEN_FORMAT(HttpStatus.BAD_REQUEST, "JWT_007", "유효하지 않은 토큰 형식입니다."),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "JWT_005", "유효하지 않은 RefreshToken입니다"),
+    INVALID_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "JWT_005", "유효하지 않은 AccessToken입니다"),
 
     // auth exception
     ADDITIONAL_SIGNUP_REQUIRED(HttpStatus.PRECONDITION_REQUIRED, "AUTH_001", "추가 회원가입 정보가 필요합니다."),
     DUPLICATE_USERID(HttpStatus.CONFLICT, "AUTH_002", "이미 존재하는 아이디입니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "AUTH_003", "이미 존재하는 닉네임입니다."),
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH_004", "존재하지 않는 사용자입니다."),
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH_004", "존재하지 않는 사용자입니다."),
     TOKEN_REQUEST_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_005", "토큰(Code) 요청에 실패했습니다."),
+    ALREADY_REGISTERED(HttpStatus.CONFLICT, "AUTH_005", "이미 가입된 회원입니다."),
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.BAD_REQUEST, "AUTH_006", "cookie에 저장된 refreshToken이 없습니다."),
 
     // signup exception
     INVALID_SIGNUP_REQUEST(HttpStatus.BAD_REQUEST, "SIGNUP_001", "회원가입 요청 정보가 올바르지 않습니다."), // 포괄적

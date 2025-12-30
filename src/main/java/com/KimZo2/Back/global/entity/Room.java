@@ -43,7 +43,7 @@ public class Room {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id")
-    private User creator;
+    private Member creator;
 
     @Builder.Default
     @Column(nullable = false)
@@ -62,8 +62,8 @@ public class Room {
     }
 
     // 연관 관계 메서드
-    public void setUser(User user) {
-        this.creator = user;
+    public void setUser(Member member) {
+        this.creator = member;
         if(!creator.getRooms().contains(this)){
             creator.getRooms().add(this);
         }

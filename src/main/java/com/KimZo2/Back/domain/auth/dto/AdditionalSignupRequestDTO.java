@@ -7,15 +7,14 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
-public class AdditionalSignupRequest {
+public class AdditionalSignupRequestDTO {
 
-    @NotBlank(message = "소셜 제공자(provider)는 필수입니다.")
-    private String provider;
-
-    @NotBlank(message = "소셜 ID(providerId)는 필수입니다.")
-    private String providerId;
+    @NotBlank(message = "회원 ID는 필수입니다.")
+    private UUID memberId;
 
     @NotBlank(message = "이름은 필수입니다.")
     private String name;

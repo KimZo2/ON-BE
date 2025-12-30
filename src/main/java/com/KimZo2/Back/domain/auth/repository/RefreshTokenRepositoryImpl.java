@@ -17,20 +17,20 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
 
     @Override
-    public void save(String userId, String refreshToken, long expirationSeconds) {
+    public void save(String memberId, String refreshToken, long expirationSeconds) {
         ValueOperations<String, Object> ops = redisTemplateForDb1.opsForValue();
-        ops.set(REFRESH_TOKEN_PREFIX + userId, refreshToken, expirationSeconds, TimeUnit.SECONDS);
+        ops.set(REFRESH_TOKEN_PREFIX + memberId, refreshToken, expirationSeconds, TimeUnit.SECONDS);
     }
 
     @Override
-    public String findByUserId(String userId) {
+    public String findByUserId(String memberId) {
         ValueOperations<String, Object> ops = redisTemplateForDb1.opsForValue();
-        Object value = ops.get(REFRESH_TOKEN_PREFIX + userId);
+        Object value = ops.get(REFRESH_TOKEN_PREFIX + memberId);
         return value != null ? value.toString() : null;
     }
 
     @Override
-    public void delete(String userId) {
-        redisTemplateForDb1.delete(REFRESH_TOKEN_PREFIX + userId);
+    public void delete(String memberId) {
+        redisTemplateForDb1.delete(REFRESH_TOKEN_PREFIX + memberId);
     }
 }

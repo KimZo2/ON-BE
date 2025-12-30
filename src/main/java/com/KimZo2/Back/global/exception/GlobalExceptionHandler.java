@@ -1,7 +1,6 @@
 package com.KimZo2.Back.global.exception;
 
 import com.KimZo2.Back.global.dto.ApiResponse;
-import com.KimZo2.Back.domain.auth.exception.AdditionalSignupRequiredException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,29 +16,6 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    /**
-     *
-     * @param e AdditionalSignupRequiredException
-     * @return 428 PRECONDITION_REQUIRED
-     */
-    @ExceptionHandler(AdditionalSignupRequiredException.class)
-    protected ResponseEntity<ApiResponse<Map<String, String>>> handleAdditionalSignupRequired(AdditionalSignupRequiredException e) {
-        ErrorCode errorCode = e.getErrorCode();
-
-        log.warn("Additional Signup Required: {} - provider={}, id={}",
-                errorCode.getCode(), e.getProvider(), e.getProviderId());
-
-        Map<String, String> data = Map.of(
-                "provider", e.getProvider(),
-                "providerId", e.getProviderId()
-        );
-
-        return new ResponseEntity<>(
-                ApiResponse.onFailure(data, errorCode.getCode(), errorCode.getMessage()),
-                errorCode.getStatus()
-        );
-    }
 
     /**
      * @Valid 어노테이션을 사용한 DTO의 유효성 검증 실패 시 발생하는 예외를 처리합니다.

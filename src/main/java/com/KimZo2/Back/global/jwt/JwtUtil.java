@@ -5,9 +5,9 @@ import com.KimZo2.Back.global.exception.CustomException;
 import com.KimZo2.Back.global.exception.ErrorCode;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
-import io. jsonwebtoken.JwtParserBuilder;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,12 +16,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 @Component
@@ -31,6 +33,9 @@ public class JwtUtil {
 
     private Key accessKey;
     private Key refreshKey;
+
+    // 헤더 이름
+    public static final String AUTHORIZATION_HEADER = "Authorization";
 
     @PostConstruct
     public void init() throws Exception {
@@ -77,12 +82,12 @@ public class JwtUtil {
     }
 
     // JWT 생성 로직 통합
-    private String createToken(String userId, String typ, Map<String, Object> claims, Date expiration) {
+    private String createToken(String memberId, String typ, Map<String, Object> claims, Date expiration) {
         Map<String, Object> tokenClaims = new HashMap<>(claims);
         tokenClaims.put("typ", typ);
         Instant now = Instant.now();
         return Jwts.builder()
-                .setSubject(userId)
+                .setSubject(memberId)
                 .addClaims(tokenClaims)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(expiration)
@@ -152,8 +157,8 @@ public class JwtUtil {
         }
     }
 
-    //  토큰에서 userId(subject) 추출 (만료된 토큰에서도 추출 가능하도록 수정)
-    public String extractUserId(String token, boolean isRefresh) {
+    //  토큰에서 memberId(subject) 추출 (만료된 토큰에서도 추출 가능하도록 수정)
+    public String extractMemberId(String token, boolean isRefresh) {
         Key key = isRefresh ? refreshKey : accessKey;
         try {
             return Jwts.parser()
@@ -163,7 +168,7 @@ public class JwtUtil {
                     .getPayload()
                     .getSubject();
         } catch (ExpiredJwtException e) {
-            // 만료된 토큰의 경우에도 subject(userId)는 반환
+            // 만료된 토큰의 경우에도 subject(memberId)는 반환
             return e.getClaims().getSubject();
         }
     }
@@ -184,4 +189,12 @@ public class JwtUtil {
         }
     }
 
+    // Request Header에서 토큰 정보 추출 ( "Bearer [token]" )
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
 }

@@ -1,9 +1,8 @@
-package com.KimZo2.Back.domain.user.controller;
+package com.KimZo2.Back.domain.member.controller;
 
-import com.KimZo2.Back.domain.auth.repository.UserInfoResponseDTO;
-import com.KimZo2.Back.domain.user.service.UserService;
+import com.KimZo2.Back.domain.auth.dto.MemberInfoResponseDTO;
+import com.KimZo2.Back.domain.member.service.MemberService;
 import com.KimZo2.Back.global.dto.ApiResponse;
-import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,14 +14,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/member")
 @RequiredArgsConstructor
-public class UserController {
+public class MemberController {
 
-    private final UserService userService;
+    private final MemberService memberService;
 
     @GetMapping("/info")
     public ApiResponse<?> getUserInfo(@AuthenticationPrincipal String uuid) {
         UUID userId = UUID.fromString(uuid);
-        UserInfoResponseDTO user = userService.getUserId(userId);
-        return ApiResponse.onSuccess(user);
+        MemberInfoResponseDTO member = memberService.getUserId(userId);
+        return ApiResponse.onSuccess(member);
     }
 }
