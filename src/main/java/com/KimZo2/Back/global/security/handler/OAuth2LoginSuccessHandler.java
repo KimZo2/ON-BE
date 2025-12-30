@@ -31,10 +31,10 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     private static final String FRONTEND_URI = "http://localhost:3000";
 
     @Value("${jwt.access-token-validity-in-seconds}")
-    private static int tokenExpireTime;
+    private long tokenExpireTime;
 
     @Value("${jwt.refresh-token-validity-in-seconds}")
-    private static int refreshTokenExpTime;
+    private long refreshTokenExpTime;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {

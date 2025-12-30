@@ -11,13 +11,13 @@ import java.util.Optional;
 public class CookieUtil {
 
     // 쿠키 추가
-    public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+    public static void addCookie(HttpServletResponse response, String name, String value, long maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         // 배포 전 true 변경 필수
         cookie.setSecure(false);
-        cookie.setMaxAge(maxAge);
+        cookie.setMaxAge((int) maxAge);
         response.addCookie(cookie);
     }
 
