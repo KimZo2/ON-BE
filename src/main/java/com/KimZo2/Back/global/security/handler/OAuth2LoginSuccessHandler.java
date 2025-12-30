@@ -30,10 +30,10 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     // 환경변수로 빼기
     private static final String FRONTEND_URI = "http://localhost:3000";
 
-    @Value("${jwt.expiration_time}")
+    @Value("${jwt.access-token-validity-in-seconds}")
     private static int tokenExpireTime;
 
-    @Value("${jwt.refresh_expiration_time}")
+    @Value("${jwt.refresh-token-validity-in-seconds}")
     private static int refreshTokenExpTime;
 
     @Override

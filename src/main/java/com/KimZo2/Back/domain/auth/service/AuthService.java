@@ -31,9 +31,9 @@ import static com.KimZo2.Back.global.exception.ErrorCode.MEMBER_NOT_FOUND;
 public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-    @Value("${jwt.expiration_time}")
+    @Value("${jwt.access-token-validity-in-seconds}")
     private long tokenExpireTime;
-    @Value("${jwt.refresh_expiration_time}")
+    @Value("${jwt.refresh-token-validity-in-seconds}")
     private int refreshTokenExpTime;
 
     private final MemberService memberService;
