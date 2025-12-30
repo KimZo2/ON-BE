@@ -23,13 +23,11 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
-    public void validateDuplicateNickName(Member member) {
+    public void validateDuplicateNickName(String nickname) {
 
-        if (memberRepository.existsByNickname(member.getNickname())) {
+        if (memberRepository.existsByNickname(nickname)) {
             throw new CustomException(DUPLICATE_NICKNAME);
         }
-
-        memberRepository.save(member);
     }
 
     public MemberInfoResponseDTO getUserId(UUID memberId) {

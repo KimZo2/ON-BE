@@ -55,7 +55,7 @@ public class AuthService {
         }
 
         // 닉네임 중복 검사
-        memberService.validateDuplicateNickName(member);
+        memberService.validateDuplicateNickName(dto.getNickname());
 
         member.setNickname(dto.getNickname());
         member.setBirthday(dto.getBirthday());
