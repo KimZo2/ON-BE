@@ -126,7 +126,7 @@ public class AuthService {
         }
 
         // Redis에 저장된 refreshToken 삭제
-        String memberId = jwtUtil.extractMemberId(accessToken, true);
+        String memberId = jwtUtil.extractMemberId(accessToken, false);
         if (refreshTokenRepository.findByUserId(memberId) != null) {
             refreshTokenRepository.delete(memberId);
         }
