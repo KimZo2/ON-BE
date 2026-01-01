@@ -61,7 +61,7 @@ public class RoomStoreRepositoryImpl implements RoomStoreRepository {
                 String.valueOf(nowMs)              // ARGV[8]
         };
 
-        redisTemplate.execute(createRoomLua, keys, (Object) args);
+        redisTemplate.execute(createRoomLua, keys, args);
     }
 
     @Override
