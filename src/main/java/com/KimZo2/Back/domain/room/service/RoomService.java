@@ -11,12 +11,15 @@ import com.KimZo2.Back.global.entity.Room;
 import com.KimZo2.Back.domain.room.repository.RoomRepository;
 import com.KimZo2.Back.domain.room.repository.RoomListRepository;
 import com.KimZo2.Back.domain.room.repository.RoomStoreRepository;
+import com.KimZo2.Back.global.util.KeyFactory;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.util.*;
@@ -39,7 +42,7 @@ public class RoomService {
     public String createRoom(RoomCreateDTO dto) {
         String creatorNickname = dto.getCreatorNickname();
 
-        // user 정보 찾기
+        // member 정보 찾기
         Member creator = memberRepository.findByNickname(creatorNickname);
         if(creator == null) throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
 
@@ -72,30 +75,49 @@ public class RoomService {
             newRoom.makePrivate(passwordEncoder.encode(pwdRaw));
         }
 
-        // Reids 런타임 세팅
-        try {
-            // PostGre 커밋
-            roomRepository.save(newRoom);
+        // PostGre 커밋 (영속성 컨텍스트에만 들어가 있는 상태)
+        roomRepository.save(newRoom);
 
-            long now = System.currentTimeMillis();
-            roomStoreRepository.createRoomRuntime(
-                    roomId,
-                    dto.getName(),
-                    dto.isPrivate(),
-                    creator.getId(),
-                    dto.getMaxParticipants(),
-                    dto.getRoomType(),
-                    roomTTL,
-                    now
-            );
+        // 트랜잭션 동기화
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            // 해당 블록은 DB 트랜잭션이 성공적으로 'Commit'이 된 직후 실행
+            @Override
+            public void afterCommit() {
+                try {
+                    long now = System.currentTimeMillis();
+                    roomStoreRepository.createRoomRuntime(
+                            roomId,
+                            dto.getName(),
+                            dto.isPrivate(),
+                            creator.getId(),
+                            dto.getMaxParticipants(),
+                            dto.getRoomType(),
+                            roomTTL,
+                            now
+                    );
+                    log.info("Redis runtime room created successfully for room: {}", roomId);
+                } catch (Exception e) {
+                    log.error("CRITICAL: DB committed but Redis failed to create runtime room. RoomID: {}", roomId, e);
 
-            return "방 생성 완료";
-        } catch (Exception e) {
-            roomStoreRepository.releaseNameLock(roomName);
-            roomStoreRepository.deleteRoomRuntimeIfPresent(roomId);
-            log.error("Failed to create room with name '{}'", roomName, e);
-            throw new CustomException(ErrorCode.ROOM_CREATION_FAILED);
-        }
+                    // redis에 존재하는 더미데이터 삭제
+                    roomStoreRepository.releaseNameLock(roomName);
+                    roomStoreRepository.deleteRoomRuntimeIfPresent(roomId);
+
+                    // 보상 트랜잭션 구축
+                    try {
+                        // RDB roomId 데이터 삭제
+                        roomRepository.deleteById(roomId);
+                        log.info("Manual rollback for DB successful. RoomID: {}", roomId);
+                    } catch (Exception dbEx) {
+                        log.error("FATAL: Failed to rollback DB after Redis failure. Manual intervention required. RoomID: {}", roomId, dbEx);
+                    }
+
+                    throw new CustomException(ErrorCode.ROOM_CREATION_FAILED);
+                }
+            }
+        });
+
+        return "방 생성 완료";
     }
 
     // 방 이름 중복 조회 -> 현재 방의 상태가 active인 방 중 중복 이름 존재하는지 확인하는 로직
@@ -123,19 +145,16 @@ public class RoomService {
 
         // 생성 최신순으로 roomId 추출
         long offset = (long) (p - 1) * s;
-        List<String> ids = roomListRepository.findPublicIdsDesc(offset, s);
+        // Pagination Hole의 문제 해결을 위해 1.5배의 리스트 가져오기
+        List<String> ids = roomListRepository.findPublicIdsDesc(offset, (int)(s * 1.5));
 
         // 파이프라인으로 Hash 일괄 로드 -> redis와의 RTT 줄이기
         List<Map<String, String>> hashes = roomListRepository.findRoomsAsHashes(ids);
 
-        log.info("RoomService - RoomPageResponse : hashes.size() = " + hashes.size());
-
         List<RoomListItemResponse> items = new ArrayList<>(ids.size());
         List<String> prune = new ArrayList<>();
 
-        int totalElement = ids.size();
-
-        log.info("RoomService - RoomPageResponse : totalElement = " + totalElement);
+        // int totalElement = ids.size();
 
         for (int i = 0; i < ids.size(); i++) {
             String id = ids.get(i);
@@ -143,15 +162,16 @@ public class RoomService {
 
             if (h == null || h.isEmpty()) {
                 prune.add(id);
-                log.info("RoomService - RoomPageResponse : h == null");
-                continue; }
+                log.warn("Found ghost room (ZSet exists but Hash missing) - ID: {}", id);
+                continue;
+            }
 
             // 비즈니스 규칙
-            String visibility = h.getOrDefault("visibility", "0"); // 0=PUBLIC, 1=PRIVATE
-            String active = h.getOrDefault("active", "true");
-            if (!"0".equals(visibility) || !"true".equalsIgnoreCase(active)) {
+            String visibility = h.getOrDefault(KeyFactory.FIELD_VISIBILITY, KeyFactory.VALUE_PUBLIC); // 0=PUBLIC, 1=PRIVATE
+            String active = h.getOrDefault(KeyFactory.FIELD_ACTIVE, KeyFactory.FIELD_TRUE);
+            if (!KeyFactory.VALUE_PUBLIC.equals(visibility) || !KeyFactory.FIELD_TRUE.equalsIgnoreCase(active)) {
                 prune.add(id);
-                log.info("RoomService - RoomPageResponse : prune.add(id) = " + id);
+                log.debug("Filtering room - ID: {}, Visibility: {}, Active: {}", id, visibility, active);
                 continue; }
 
             // DTO 매핑
@@ -164,10 +184,15 @@ public class RoomService {
             ));
         }
 
-        log.info("RoomService - RoomPageResponse : items.size" + items.size());
+        if (items.size() > s) {
+            items = items.subList(0, s);
+        }
 
         // 정합성 보수 -> redis HASH에는 사라졋지만 zset인덱스에는 남아있음
-        if (!prune.isEmpty()) roomListRepository.removeFromPublicIndex(prune);
+        if (!prune.isEmpty()){
+            log.info("Self-healing triggered: Removing {} invalid IDs from ZSet. IDs: {}", prune.size(), prune);
+            roomListRepository.removeFromPublicIndex(prune);
+        }
 
         boolean hasNext = p < totalPages;
         return new RoomPageResponse(p, s, items.size(), hasNext, items);
