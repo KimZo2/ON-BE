@@ -71,6 +71,8 @@ public class RoomListRepositoryImpl implements RoomListRepository {
     @Override
     public void removeFromPublicIndex(Collection<String> ids) {
         if (ids == null || ids.isEmpty()) return;
-        redis.opsForZSet().remove(KeyFactory.roomPublic(), ids.toArray());
+
+        // 유령 방 삭제
+        redis.opsForZSet().remove(KeyFactory.roomPublic(), ids.toArray(new String[0]));
     }
 }
