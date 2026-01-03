@@ -23,13 +23,13 @@ public class ParticipationController {
                          Principal principal,
                          @Header("simpSessionId") String sessionId){
 
-        UUID userId = UUID.fromString(principal.getName());
+        UUID memberId = UUID.fromString(principal.getName());
 
         // 사용자 및 비밀번호 체크
         participationServiceService.checkRoom(roomId, dto.getPassword());
 
         // 방 입장 로직
-        participationServiceService.joinRoom(roomId, userId, sessionId);
+        participationServiceService.joinRoom(roomId, memberId, sessionId);
     }
 
     @MessageMapping("/room/{roomId}/leave")

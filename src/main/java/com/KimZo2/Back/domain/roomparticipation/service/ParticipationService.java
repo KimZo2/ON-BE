@@ -81,24 +81,24 @@ public class ParticipationService {
     }
 
     // 방 입장 로직
-    public void joinRoom(UUID roomId, UUID userId, String sessionId) {
+    public void joinRoom(UUID roomId, UUID memeberId, String sessionId) {
         long nowMs = System.currentTimeMillis();
         // 방 입장
-        Member user = memberRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-        JoinResult result = joinRepository.join(roomId, userId, user.getNickname(), sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
+        Member member = memberRepository.findById(memeberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        JoinResult result = joinRepository.join(roomId, memeberId, member.getNickname(), sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
 
         switch (result.status()) {
             case OK -> {
                 // 브로드캐스트
                 msg.convertAndSend("/topic/room/" + roomId + "/msg",
-                        new RoomEnterResponseDTO(roomId, "JOIN", userId.toString(), user.getNickname(), result.count()));
+                        new RoomEnterResponseDTO(roomId, "JOIN", memeberId.toString(), member.getNickname(), result.count()));
                 // 개인 응답
-                msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "JOIN", userId.toString(), user.getNickname(), result.count()));
+                msg.convertAndSendToUser(memeberId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "JOIN", memeberId.toString(), member.getNickname(), result.count()));
             }
             case ALREADY, FULL, CLOSED_OR_NOT_FOUND, ERROR ->
-                    msg.convertAndSendToUser(userId.toString(), "/queue/join",
-                            new RoomEnterResponseDTO(roomId, "JOIN", userId.toString(), user.getNickname(), result.count()));
+                    msg.convertAndSendToUser(memeberId.toString(), "/queue/join",
+                            new RoomEnterResponseDTO(roomId, "JOIN", memeberId.toString(), member.getNickname(), result.count()));
         }
     }
 
