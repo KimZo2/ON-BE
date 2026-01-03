@@ -32,12 +32,12 @@ public class MemberService {
 
     public MemberInfoResponseDTO getUserId(UUID memberId) {
 
-        Member user = memberRepository.findById(memberId)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
         return new MemberInfoResponseDTO(
-                user.getId(),
-                user.getNickname()
+                member.getId(),
+                member.getNickname()
         );
     }
 }
