@@ -21,6 +21,11 @@ public final class KeyFactory {
 
     public static String ROOM_META_PREFIX = "rooms:";
     public static final String ROOM_NOTIFY_PREFIX = "rooms:notify:";
+
+    public static final String FIELD_VISIBILITY = "visibility";
+    public static final String FIELD_ACTIVE = "active";
+    public static final String FIELD_TRUE = "true";
+    public static final String VALUE_PUBLIC = "0";
 }
 
 

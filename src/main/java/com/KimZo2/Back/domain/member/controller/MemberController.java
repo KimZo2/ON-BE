@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.UUID;
 
 @RestController
@@ -19,9 +20,10 @@ public class MemberController {
     private final MemberService memberService;
 
     @GetMapping("/info")
-    public ApiResponse<?> getUserInfo(@AuthenticationPrincipal String uuid) {
-        UUID userId = UUID.fromString(uuid);
-        MemberInfoResponseDTO member = memberService.getUserId(userId);
+    public ApiResponse<?> getUserInfo(Principal principal) {
+        UUID memberId = UUID.fromString(principal.getName());
+
+        MemberInfoResponseDTO member = memberService.getUserId(memberId);
         return ApiResponse.onSuccess(member);
     }
 }
