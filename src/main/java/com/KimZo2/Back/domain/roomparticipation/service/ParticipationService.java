@@ -81,41 +81,41 @@ public class ParticipationService {
     }
 
     // 방 입장 로직
-    public void joinRoom(UUID roomId, UUID memeberId, String sessionId) {
+    public void joinRoom(UUID roomId, UUID memberId, String sessionId) {
         long nowMs = System.currentTimeMillis();
         // 방 입장
-        Member member = memberRepository.findById(memeberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-        JoinResult result = joinRepository.join(roomId, memeberId, member.getNickname(), sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
+        Member member = memberRepository.findById(memberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        JoinResult result = joinRepository.join(roomId, memberId, member.getNickname(), sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
 
         switch (result.status()) {
             case OK -> {
                 // 브로드캐스트
                 msg.convertAndSend("/topic/room/" + roomId + "/msg",
-                        new RoomEnterResponseDTO(roomId, "JOIN", memeberId.toString(), member.getNickname(), result.count()));
+                        new RoomEnterResponseDTO(roomId, "JOIN", memberId.toString(), member.getNickname(), result.count()));
                 // 개인 응답
-                msg.convertAndSendToUser(memeberId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "JOIN", memeberId.toString(), member.getNickname(), result.count()));
+                msg.convertAndSendToUser(memberId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, "JOIN", memberId.toString(), member.getNickname(), result.count()));
             }
             case ALREADY, FULL, CLOSED_OR_NOT_FOUND, ERROR ->
-                    msg.convertAndSendToUser(memeberId.toString(), "/queue/join",
-                            new RoomEnterResponseDTO(roomId, "JOIN", memeberId.toString(), member.getNickname(), result.count()));
+                    msg.convertAndSendToUser(memberId.toString(), "/queue/join",
+                            new RoomEnterResponseDTO(roomId, "JOIN", memberId.toString(), member.getNickname(), result.count()));
         }
     }
 
     // 방 퇴장 로직
-    public void leaveRoom(UUID roomId, UUID userId){
-        Long result =  roomCleanUpRepository.cleanupExpiredUser(roomId, userId.toString());
+    public void leaveRoom(UUID roomId, UUID memberId){
+        Long result =  roomCleanUpRepository.cleanupExpiredUser(roomId, memberId.toString());
 
         if (result != null && result == 1) {
-            log.info("User {} explicitly left room {}.", userId, roomId);
+            log.info("User {} explicitly left room {}.", memberId, roomId);
 
             // 3. 같은 방의 다른 유저들에게 퇴장 알림 메시지 전송
-            UserLeaveDTO payload = new UserLeaveDTO(userId.toString(), "SELF_LOGOUT");
+            UserLeaveDTO payload = new UserLeaveDTO(memberId.toString(), "SELF_LOGOUT");
             String destination = "/topic/room/" + roomId + "/leave";
 
             msg.convertAndSend(destination, payload);
         } else {
-            log.warn("User {} leave request for room {} failed or user was already gone.", userId, roomId);
+            log.warn("User {} leave request for room {} failed or user was already gone.", memberId, roomId);
         }
     }
 }
