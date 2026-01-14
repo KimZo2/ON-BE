@@ -14,5 +14,6 @@ public class RoomEnterResponseDTO {
     private String message;
     private String userId;
     private String nickName;
+    private int avatar;
     private int count;
 }

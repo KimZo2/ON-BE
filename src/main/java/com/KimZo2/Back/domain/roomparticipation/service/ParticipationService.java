@@ -87,18 +87,20 @@ public class ParticipationService {
         Member member = memberRepository.findById(memberId).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         JoinResult result = joinRepository.join(roomId, memberId, member.getNickname(), sessionId, presenceTtlSec, userRoomTtlSec, nowMs);
 
-        switch (result.status()) {
-            case OK -> {
+        String status = String.valueOf(result.status());
+        switch (status) {
+            case "OK" -> {
                 // 브로드캐스트
                 msg.convertAndSend("/topic/room/" + roomId + "/msg",
-                        new RoomEnterResponseDTO(roomId, "JOIN", memberId.toString(), member.getNickname(), result.count()));
+                        new RoomEnterResponseDTO(roomId, status, memberId.toString(), member.getNickname(), member.getAvatar(), result.count()));
                 // 개인 응답
                 msg.convertAndSendToUser(memberId.toString(), "/queue/join",
-                        new RoomEnterResponseDTO(roomId, "JOIN", memberId.toString(), member.getNickname(), result.count()));
+                        new RoomEnterResponseDTO(roomId, status, memberId.toString(), member.getNickname(), member.getAvatar(), result.count()));
             }
-            case ALREADY, FULL, CLOSED_OR_NOT_FOUND, ERROR ->
-                    msg.convertAndSendToUser(memberId.toString(), "/queue/join",
-                            new RoomEnterResponseDTO(roomId, "JOIN", memberId.toString(), member.getNickname(), result.count()));
+            case "ALREADY", "FULL", "CLOSED_OR_NOT_FOUND", "ERROR" -> {
+                msg.convertAndSendToUser(memberId.toString(), "/queue/join",
+                        new RoomEnterResponseDTO(roomId, status, memberId.toString(), member.getNickname(), member.getAvatar(), result.count()));
+            }
         }
     }
 
