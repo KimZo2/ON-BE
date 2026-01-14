@@ -61,6 +61,7 @@ public class AuthService {
         member.setNickname(dto.getNickname());
         member.setBirthday(dto.getBirthday());
         member.setAgreement(dto.isAgreement());
+        member.setAvatar(1);
 
         // GUEST -> USER 승격
         member.setRole(Role.USER);
