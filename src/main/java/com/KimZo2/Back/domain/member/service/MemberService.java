@@ -1,6 +1,7 @@
 package com.KimZo2.Back.domain.member.service;
 
-import com.KimZo2.Back.domain.auth.dto.MemberInfoResponseDTO;
+import com.KimZo2.Back.domain.member.dto.MemberIdResponseDTO;
+import com.KimZo2.Back.domain.member.dto.MemberInformationResponseDTO;
 import com.KimZo2.Back.domain.member.repository.MemberRepository;
 import com.KimZo2.Back.global.entity.Member;
 import com.KimZo2.Back.global.exception.CustomException;
@@ -23,6 +24,17 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
+    @Transactional
+    public String changeAvatar(UUID memberId, int avatar) {
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+
+        member.updateAvatar(avatar);
+
+        return "아바타 변경이 완료되었습니다.";
+    }
+
     public void validateDuplicateNickName(String nickname) {
 
         if (memberRepository.existsByNickname(nickname)) {
@@ -30,14 +42,25 @@ public class MemberService {
         }
     }
 
-    public MemberInfoResponseDTO getUserId(UUID memberId) {
+    public MemberIdResponseDTO getUserId(UUID memberId) {
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
-        return new MemberInfoResponseDTO(
+        return new MemberIdResponseDTO(
                 member.getId(),
                 member.getNickname()
+        );
+    }
+
+    public MemberInformationResponseDTO getUserInformation(UUID memberId) {
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+
+        return new MemberInformationResponseDTO(
+                member.getNickname(),
+                member.getAvatar()
         );
     }
 }
