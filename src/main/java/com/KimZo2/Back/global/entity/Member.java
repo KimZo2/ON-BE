@@ -45,6 +45,9 @@ public class Member implements UserDetails {
     @Column(nullable = true)
     private boolean agreement;
 
+    @Column(nullable = true)
+    private int avatar;
+
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Room> rooms = new ArrayList<>();
@@ -54,6 +57,12 @@ public class Member implements UserDetails {
         rooms.add(room);
         room.setUser(this);
     }
+
+    public void updateAvatar(int avatarNum) {
+        this.avatar = avatarNum;
+    }
+
+    //---------------------//
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
