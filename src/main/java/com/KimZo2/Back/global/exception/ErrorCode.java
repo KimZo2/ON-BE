@@ -31,6 +31,9 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "JWT_005", "유효하지 않은 RefreshToken입니다"),
     INVALID_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "JWT_005", "유효하지 않은 AccessToken입니다"),
 
+    // member exception
+    INVALID_AVATAR_NUM(HttpStatus.BAD_REQUEST, "MEMBER_001", "아바타 형식이 올바르지 않습니다"),
+
     // auth exception
     ADDITIONAL_SIGNUP_REQUIRED(HttpStatus.PRECONDITION_REQUIRED, "AUTH_001", "추가 회원가입 정보가 필요합니다."),
     DUPLICATE_USERID(HttpStatus.CONFLICT, "AUTH_002", "이미 존재하는 아이디입니다."),
@@ -39,6 +42,7 @@ public enum ErrorCode {
     TOKEN_REQUEST_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_005", "토큰(Code) 요청에 실패했습니다."),
     ALREADY_REGISTERED(HttpStatus.CONFLICT, "AUTH_005", "이미 가입된 회원입니다."),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.BAD_REQUEST, "AUTH_006", "cookie에 저장된 refreshToken이 없습니다."),
+
 
     // signup exception
     INVALID_SIGNUP_REQUEST(HttpStatus.BAD_REQUEST, "SIGNUP_001", "회원가입 요청 정보가 올바르지 않습니다."), // 포괄적
