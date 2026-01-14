@@ -9,7 +9,7 @@ public interface PositionRepository {
     /** moveLua 실행 결과: status, appliedSeq, version */
     MoveResult userMoveLogic(UUID roomId, UUID userId, String sessionId,
                           String nickname, double x, double y, long ts, long seq,
-                          int presenceTtlSec, String direction, boolean isMoving);
+                          int presenceTtlSec, String direction, int avatar, boolean isMoving);
 
     List<RoomPosResponseDTO> loadAll(UUID roomId);
 

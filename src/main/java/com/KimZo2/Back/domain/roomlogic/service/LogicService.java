@@ -61,12 +61,13 @@ public class LogicService {
         long seq = cmd.getSeq();
         String direction = cmd.getDirection();
         boolean isMoving = cmd.getIsMoving();
+        int avatar = cmd.getAvatar();
 
         var res = positionRepository.userMoveLogic(
                 roomId, userId, sessionId,
                 nickname, x, y, now,
                 Optional.ofNullable(cmd.getSeq()).orElse(0L),
-                presenceTtlSec, direction, isMoving
+                presenceTtlSec, direction, avatar, isMoving
         );
 
         if ("NOT_MEMBER".equals(res.status())) return ack(false, LogicCode.valueOf("NOT_MEMBER"), cmd.getSeq(), now);
@@ -80,7 +81,7 @@ public class LogicService {
         // 유저 ID를 키로 최종 좌표를 덮어씌우기
         roomUpdates.put(
                 userId,
-                new RoomPosResponseDTO(userId, nickname, x, y, seq, direction, isMoving)
+                new RoomPosResponseDTO(userId, nickname, x, y, seq, direction, avatar, isMoving)
         );
 
         return ack(true, LogicCode.valueOf("OK"), cmd.getSeq(), now);

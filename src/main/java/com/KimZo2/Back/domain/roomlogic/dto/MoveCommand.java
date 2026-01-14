@@ -24,6 +24,9 @@ public class MoveCommand {
 
     private Boolean isMoving;
 
+    // 아바타 번호
+    private int avatar;
+
     /**
      * 기본 형식 검증: (x,y) 또는 (dx,dy) 중 하나는 필수, NaN 금지, seq >= 0
      */
