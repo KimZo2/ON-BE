@@ -3,7 +3,7 @@ package com.KimZo2.Back.domain.roomparticipation.service;
 import com.KimZo2.Back.domain.member.repository.MemberRepository;
 import com.KimZo2.Back.domain.roomlogic.dto.UserLeaveDTO;
 import com.KimZo2.Back.domain.room.dto.JoinResult;
-import com.KimZo2.Back.domain.room.dto.RoomEnterResponseDTO;
+import com.KimZo2.Back.domain.roomparticipation.dto.RoomEnterResponseDTO;
 import com.KimZo2.Back.global.entity.Member;
 import com.KimZo2.Back.global.exception.CustomException;
 import com.KimZo2.Back.global.exception.ErrorCode;
@@ -89,7 +89,7 @@ public class ParticipationService {
 
         String status = String.valueOf(result.status());
         switch (status) {
-            case "OK" -> {
+            case "OK", "ALREADY" -> {
                 // 브로드캐스트
                 msg.convertAndSend("/topic/room/" + roomId + "/msg",
                         new RoomEnterResponseDTO(roomId, status, memberId.toString(), member.getNickname(), member.getAvatar(), result.count()));
@@ -97,7 +97,7 @@ public class ParticipationService {
                 msg.convertAndSendToUser(memberId.toString(), "/queue/join",
                         new RoomEnterResponseDTO(roomId, status, memberId.toString(), member.getNickname(), member.getAvatar(), result.count()));
             }
-            case "ALREADY", "FULL", "CLOSED_OR_NOT_FOUND", "ERROR" -> {
+            case  "FULL", "CLOSED_OR_NOT_FOUND", "ERROR" -> {
                 msg.convertAndSendToUser(memberId.toString(), "/queue/join",
                         new RoomEnterResponseDTO(roomId, status, memberId.toString(), member.getNickname(), member.getAvatar(), result.count()));
             }
