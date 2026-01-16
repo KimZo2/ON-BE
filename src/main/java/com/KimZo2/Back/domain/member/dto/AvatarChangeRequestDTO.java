@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 public class AvatarChangeRequestDTO {
 
-    @NotBlank(message = "Avatar Number는 필수입니다.")
+    @jakarta.validation.constraints.Min(value = 1, message = "Avatar Number는 1 이상이어야 합니다.")
     private int avatar;
 }

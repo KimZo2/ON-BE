@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,7 +43,7 @@ public class MemberController {
     })
     @GetMapping("/info")
     public ApiResponse<?> getUserId(@Parameter(hidden = true) Principal principal) {
-        UUID memberId = UUID.fromString(principal.getName());
+        UUID memberId = switchMemberId(principal.getName());
 
         MemberIdResponseDTO member = memberService.getUserId(memberId);
         return ApiResponse.onSuccess(member);
@@ -66,7 +67,7 @@ public class MemberController {
     })
     @GetMapping("/me")
     public ApiResponse<?> getUserInformation(@Parameter(hidden = true) Principal principal) {
-        UUID memberId = UUID.fromString(principal.getName());
+        UUID memberId = switchMemberId(principal.getName());
 
         MemberInformationResponseDTO member = memberService.getUserInformation(memberId);
         return ApiResponse.onSuccess(member);
@@ -90,11 +91,15 @@ public class MemberController {
     })
     @PatchMapping("/change")
     public ApiResponse<?> changeAvatar(@Parameter(hidden = true) Principal principal,
-                                       @RequestBody AvatarChangeRequestDTO dto) {
-        UUID memberId = UUID.fromString(principal.getName());
+                                       @Valid  @RequestBody AvatarChangeRequestDTO dto) {
+        UUID memberId = switchMemberId(principal.getName());
 
         String message = memberService.changeAvatar(memberId, dto.getAvatar());
 
         return ApiResponse.onSuccess(message);
+    }
+
+    private static UUID switchMemberId(String memberId) {
+        return UUID.fromString(memberId);
     }
 }

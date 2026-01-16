@@ -41,6 +41,8 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    private final int DEFAULT_AVATAR = 1;
+
     // 추가 회원가입 정보 입력 -> 회원가입 완료
     @Transactional
     public String signup(AdditionalSignupRequestDTO dto) {
@@ -61,7 +63,7 @@ public class AuthService {
         member.setNickname(dto.getNickname());
         member.setBirthday(dto.getBirthday());
         member.setAgreement(dto.isAgreement());
-        member.setAvatar(1);
+        member.setAvatar(DEFAULT_AVATAR);
 
         // GUEST -> USER 승격
         member.setRole(Role.USER);
