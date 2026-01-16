@@ -1,6 +1,5 @@
 package com.KimZo2.Back.domain.member.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 

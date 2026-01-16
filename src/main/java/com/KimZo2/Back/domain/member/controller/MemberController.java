@@ -43,7 +43,7 @@ public class MemberController {
     })
     @GetMapping("/info")
     public ApiResponse<?> getUserId(@Parameter(hidden = true) Principal principal) {
-        UUID memberId = switchMemberId(principal.getName());
+        UUID memberId = getMemberIdFromString(principal.getName());
 
         MemberIdResponseDTO member = memberService.getUserId(memberId);
         return ApiResponse.onSuccess(member);
@@ -67,7 +67,7 @@ public class MemberController {
     })
     @GetMapping("/me")
     public ApiResponse<?> getUserInformation(@Parameter(hidden = true) Principal principal) {
-        UUID memberId = switchMemberId(principal.getName());
+        UUID memberId = getMemberIdFromString(principal.getName());
 
         MemberInformationResponseDTO member = memberService.getUserInformation(memberId);
         return ApiResponse.onSuccess(member);
@@ -92,14 +92,14 @@ public class MemberController {
     @PatchMapping("/change")
     public ApiResponse<?> changeAvatar(@Parameter(hidden = true) Principal principal,
                                        @Valid  @RequestBody AvatarChangeRequestDTO dto) {
-        UUID memberId = switchMemberId(principal.getName());
+        UUID memberId = getMemberIdFromString(principal.getName());
 
         String message = memberService.changeAvatar(memberId, dto.getAvatar());
 
         return ApiResponse.onSuccess(message);
     }
 
-    private static UUID switchMemberId(String memberId) {
+    private static UUID getMemberIdFromString(String memberId) {
         return UUID.fromString(memberId);
     }
 }
