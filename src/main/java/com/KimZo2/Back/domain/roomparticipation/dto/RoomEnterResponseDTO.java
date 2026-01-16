@@ -1,4 +1,4 @@
-package com.KimZo2.Back.domain.room.dto;
+package com.KimZo2.Back.domain.roomparticipation.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
