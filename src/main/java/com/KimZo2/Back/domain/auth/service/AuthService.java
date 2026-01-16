@@ -41,7 +41,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    private final int DEFAULT_AVATAR = 1;
+    private static final int DEFAULT_AVATAR = 1;
 
     // 추가 회원가입 정보 입력 -> 회원가입 완료
     @Transactional
