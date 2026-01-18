@@ -1,6 +1,6 @@
 package com.KimZo2.Back.domain.roomparticipation.controller;
 
-import com.KimZo2.Back.domain.room.dto.RoomEnterDTO;
+import com.KimZo2.Back.domain.roomparticipation.dto.RoomEnterDTO;
 import com.KimZo2.Back.domain.roomparticipation.service.ParticipationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;

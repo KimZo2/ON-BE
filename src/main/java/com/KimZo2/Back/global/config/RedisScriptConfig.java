@@ -218,6 +218,7 @@ public class RedisScriptConfig {
     -- 9: direction
     -- 10: isMoving
     -- 11: nickname
+    -- 12: avatar
 
     local userId   = ARGV[1]
     local session  = ARGV[2]
@@ -230,6 +231,7 @@ public class RedisScriptConfig {
     local direction = ARGV[9]
     local isMoving  = ARGV[10] or "false"
     local nickname  = ARGV[11]
+    local avatar = ARGV[12]
     
 
     -- 1) member check
@@ -258,7 +260,7 @@ public class RedisScriptConfig {
         end
     end
 
-    local value = nickname .. ',' .. x .. ',' .. y .. ',' .. tostring(ts) .. ',' .. tostring(seq) .. ',' .. direction .. ',' .. isMoving
+    local value = nickname .. ',' .. x .. ',' .. y .. ',' .. tostring(ts) .. ',' .. tostring(seq) .. ',' .. direction .. ',' .. avatar .. ',' .. isMoving
     redis.call('HSET', KEYS[3], field, value)
 
     -- 4) update seen

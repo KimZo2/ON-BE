@@ -1,4 +1,4 @@
-package com.KimZo2.Back.domain.room.dto;
+package com.KimZo2.Back.domain.roomparticipation.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,5 +14,6 @@ public class RoomEnterResponseDTO {
     private String message;
     private String userId;
     private String nickName;
+    private int avatar;
     private int count;
 }

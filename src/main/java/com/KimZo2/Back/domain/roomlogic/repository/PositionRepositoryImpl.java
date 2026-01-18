@@ -19,7 +19,7 @@ public class PositionRepositoryImpl implements PositionRepository{
     private final DefaultRedisScript<List> userMoveLua;
 
     @Override
-    public MoveResult userMoveLogic(UUID roomId, UUID userId, String sessionId, String nickname, double x, double y, long ts, long seq, int presenceTtlSec, String direction, boolean isMoving) {
+    public MoveResult userMoveLogic(UUID roomId, UUID userId, String sessionId, String nickname, double x, double y, long ts, long seq, int presenceTtlSec, String direction, int avatar, boolean isMoving) {
         List<String> keys = List.of(
                 KeyFactory.roomMembers(roomId),
                 KeyFactory.presence(roomId, userId, sessionId),
@@ -38,7 +38,8 @@ public class PositionRepositoryImpl implements PositionRepository{
                 roomId.toString(),
                 direction,
                 Boolean.toString(isMoving),
-                nickname
+                nickname,
+                String.valueOf(avatar)
         );
 
         @SuppressWarnings("unchecked")
@@ -56,16 +57,17 @@ public class PositionRepositoryImpl implements PositionRepository{
 
         m.forEach((k, v) -> {
             UUID userId = UUID.fromString(String.valueOf(k));
-            String[] parts = String.valueOf(v).split(",", 7);
+            String[] parts = String.valueOf(v).split(",", 8);
 
             String nickname = parts[0];
             double x = Double.parseDouble(parts[1]);
             double y = Double.parseDouble(parts[2]);
             long seq = Long.parseLong(parts[4]);
             String direction = parts[5];
-            boolean isMoving = Boolean.parseBoolean(parts[6]);
+            int avatar = Integer.parseInt(parts[6]);
+            boolean isMoving = Boolean.parseBoolean(parts[7]);
 
-            out.add(new RoomPosResponseDTO(userId, nickname, x, y, seq, direction, isMoving));
+            out.add(new RoomPosResponseDTO(userId, nickname, x, y, seq, direction, avatar, isMoving));
         });
 
         return out;

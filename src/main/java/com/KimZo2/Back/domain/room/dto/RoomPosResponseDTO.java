@@ -14,5 +14,6 @@ public class RoomPosResponseDTO {
     private double y;
     private long seq;
     private String direction;
+    private int avatar;
     private boolean isMoving;
 }

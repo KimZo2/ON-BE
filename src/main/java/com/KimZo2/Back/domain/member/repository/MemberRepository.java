@@ -8,13 +8,13 @@ import java.util.UUID;
 
 public interface MemberRepository extends JpaRepository<Member, UUID> {
 
-    // user nickname 중복 방지
+    // member nickname 중복 방지
     boolean existsByNickname(String nickname);
 
-    // user 정보 반환
+    // member 정보 반환
     Optional<Member> findByProviderAndProviderId(String provider, String providerId);
 
-    // user nickname으로 찾기
+    // member nickname으로 찾기
     Member findByNickname(String nickname);
 
 }
