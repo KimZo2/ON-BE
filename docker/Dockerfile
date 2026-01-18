@@ -1,24 +1,17 @@
-# eclipse-temurin alpine 이미지 사용
-FROM eclipse-temurin:21-jdk-alpine
+# Java 21 런타임 이미지를 기반으로 설정
+FROM eclipse-temurin:21-jdk-jammy
 
-# 빌드 중 변수 초기화
-# 빌드된 jar 파일 경로
+# 컨테이너 내 작업 디렉토리 설정
+WORKDIR /app
+
+# 빌드 시 생성된 jar 파일을 컨테이너 내부로 복사
+# Gradle 빌드 결과물인 build/libs/*.jar 파일을 app.jar로 복사합니다.
 ARG JAR_FILE=build/libs/*.jar
-# Spring Boot에서 활성화할 프로파일 설정
-ARG PROFILES
-# Spring Boot에서 사용할 환경변수 설정
-ARG ENV
+COPY ${JAR_FILE} app.jar
 
-# 작업 디렉터리를 '/apps'로 설정
-WORKDIR /apps
-# 빌드된 jar 파일을 /apps 폴더에 app.jar 이름으로 복사
-COPY ${JAR_FILE} /apps/app.jar
+# 컨테이너 실행 시 애플리케이션 실행 명령어
+# 메모리 효율을 위해 JVM 옵션을 추가할 수 있습니다.
+ENTRYPOINT ["java", "-jar", "app.jar"]
 
-# 컨테이너가 시작될 때 실행할 명령어
-# $JAVA_OPTS → docker-compose-blue.yml 에서 힙 메모리 설정
-# -Dspring.profiles.active=$PROFILES  활성화할 프로파일을 설정
-# -Dserver.env=$ENV  환경 변수를 설정
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -Dspring.profiles.active=$PROFILES -Dserver.env=$ENV -jar /apps/app.jar"]
-
-# $JAVA_OPTS를 사용하지 않는다면 아래처럼 해도 됨 (오타가 없으면)
-# ENTRYPOINT ["java", "-Dspring.profiles.active=${PROFILES}", "-Dserver.env=${ENV}", "-jar", "app.jar"]
+# 서비스 포트 노출 (Spring Boot 기본값 8080)
+EXPOSE 8080

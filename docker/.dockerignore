@@ -1,0 +1,21 @@
+# 빌드 결과물 및 캐시
+build/
+out/
+.gradle/
+bin/
+
+# 소스 제어 및 설정
+.git/
+.gitignore
+.github/
+
+# IDE 설정
+.idea/
+*.iml
+.vscode/
+
+# 도커 및 환경 설정 파일
+Dockerfile
+docker-compose.yml
+.env
+nginx/
