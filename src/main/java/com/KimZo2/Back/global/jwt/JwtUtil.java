@@ -59,39 +59,34 @@ public class JwtUtil {
     }
 
     // JWT 생성 (액세스 토큰)
-    public String createAccessToken(String userId, String nickname, String provider) {
-        long now = System.currentTimeMillis();
-        long validity = jwtProperties.getAccessTokenValidityInSeconds() * 1000L;
-        Date expiration = new Date(now + validity);
+    public String createAccessToken(String memberId, String nickname, String provider) {
+        long validity = jwtProperties.getAccessTokenValidityInSeconds();
 
-        log.info("Creating Access Token. Now: {}, Validity: {}ms, Expiration: {}", new Date(now), validity, expiration);
-
-        return createToken(userId, "access", Map.of(
+        return createToken(memberId, "access", Map.of(
                 "nickname", nickname,
                 "provider", provider
-        ), expiration);
+        ), validity);
     }
 
     // JWT 생성 (리프레시 토큰)
-    public String createRefreshToken(String userId) {
-        long now = System.currentTimeMillis();
-        long validity = jwtProperties.getRefreshTokenValidityInSeconds() * 1000L;
-        Date expiration = new Date(now + validity);
+    public String createRefreshToken(String memberId) {
+        long validity = jwtProperties.getRefreshTokenValidityInSeconds();
 
-        return createToken(userId, "refresh", Map.of(), expiration);
+        return createToken(memberId, "refresh", Map.of(), validity);
     }
 
     // JWT 생성 로직 통합
-    private String createToken(String memberId, String typ, Map<String, Object> claims, Date expiration) {
-        Map<String, Object> tokenClaims = new HashMap<>(claims);
-        tokenClaims.put("typ", typ);
+    private String createToken(String memberId, String typ, Map<String, Object> claims, long validityInSeconds) {
         Instant now = Instant.now();
+        Instant expiration = now.plusSeconds(validityInSeconds);
+
         return Jwts.builder()
                 .setSubject(memberId)
-                .addClaims(tokenClaims)
+                .addClaims(claims)
+                .claim("typ", typ)
                 .setIssuedAt(Date.from(now))
-                .setExpiration(expiration)
-                .signWith(accessKey, SignatureAlgorithm.HS256)
+                .setExpiration(Date.from(expiration))
+                .signWith(typ.equals("access") ? accessKey : refreshKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
