@@ -60,7 +60,7 @@ public class JwtUtil {
 
     // JWT 생성 (액세스 토큰)
     public String createAccessToken(String memberId, String nickname, String provider) {
-        long validity = jwtProperties.getAccessTokenValidityInSeconds() * 1000L;
+        long validity = jwtProperties.getAccessTokenValidityInSeconds();
 
         return createToken(memberId, "access", Map.of(
                 "nickname", nickname,
@@ -70,7 +70,7 @@ public class JwtUtil {
 
     // JWT 생성 (리프레시 토큰)
     public String createRefreshToken(String memberId) {
-        long validity = jwtProperties.getRefreshTokenValidityInSeconds() * 1000L;
+        long validity = jwtProperties.getRefreshTokenValidityInSeconds();
 
         return createToken(memberId, "refresh", Map.of(), validity);
     }
