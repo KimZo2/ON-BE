@@ -42,6 +42,6 @@ public class RoomFunctionRepositoryImpl implements RoomFunctionRepository {
 
     @Override
     public String getRoomName(UUID roomId) {
-        return (String) redisTemplate.opsForHash().get("rooms:" + roomId, "roomName");
+        return (String) redisTemplate.opsForHash().get(KeyFactory.roomMeta(roomId), "roomName");
     }
 }

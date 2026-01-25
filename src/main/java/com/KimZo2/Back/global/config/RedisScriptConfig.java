@@ -246,7 +246,7 @@ public class RedisScriptConfig {
     local field = userId
     local old = redis.call('HGET', KEYS[3], field)
     if old then
-        -- old format: "nickname,x,y,ts,seq,direction,avartar,isMoving"
+        -- old format: "nickname,x,y,ts,seq,direction,avatar,isMoving"
         local parts = {}
         for v in string.gmatch(old, '([^,]+)') do table.insert(parts, v) end
         local oldSeq = tonumber(parts[5]) or -1
