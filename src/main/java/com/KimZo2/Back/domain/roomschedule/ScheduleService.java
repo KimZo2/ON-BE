@@ -121,8 +121,13 @@ public class ScheduleService {
         for (String roomIdStr : allRoomIds) {
             try {
                 UUID roomId = UUID.fromString(roomIdStr);
+
+                boolean exists = roomFunctionRepository.roomExists(roomId);
+
+                String roomName = roomFunctionRepository.getRoomName(roomId);
+
                 // Check if the main room meta key exists
-                if (!roomFunctionRepository.roomExists(roomId)) {
+                if (!exists || roomName == null) {
                     log.info("Found orphaned room data for roomId: {}. Cleaning up.", roomId);
                     roomCleanUpRepository.deleteAllRoomData(roomId);
                     cleanupCount++;
