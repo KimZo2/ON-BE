@@ -1,5 +1,6 @@
 package com.KimZo2.Back.global.config;
 
+import com.KimZo2.Back.global.listener.RedisKeyExpirationListener;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -54,7 +55,19 @@ public class RedisConfig {
         template.setValueSerializer(new StringRedisSerializer());
         return template;
     }
+    
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(
+            @Qualifier("redisConnectionFactoryDb0") RedisConnectionFactory connectionFactory,
+            RedisKeyExpirationListener expirationListener) { // 작성하신 리스너 클래스 주입
 
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
 
+        // __keyevent@0__:expired -> 0번 DB 만료만 감시
+        // __keyevent@*__:expired -> 모든 DB 만료 감시
+        container.addMessageListener(expirationListener, new PatternTopic("__keyevent@*__:expired"));
 
+        return container;
+    }
 }
