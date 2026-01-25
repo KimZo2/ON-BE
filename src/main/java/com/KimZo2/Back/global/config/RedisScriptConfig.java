@@ -246,7 +246,7 @@ public class RedisScriptConfig {
     local field = userId
     local old = redis.call('HGET', KEYS[3], field)
     if old then
-        -- old format: "nickname,x,y,ts,seq,direction,isMoving"
+        -- old format: "nickname,x,y,ts,seq,direction,avartar,isMoving"
         local parts = {}
         for v in string.gmatch(old, '([^,]+)') do table.insert(parts, v) end
         local oldSeq = tonumber(parts[5]) or -1
@@ -304,6 +304,11 @@ public class RedisScriptConfig {
         local userRoomKey= KEYS[5]
         local nickKey    = KEYS[6]
         local uid        = ARGV[1]
+        
+        -- 방 메타데이터가 없으면 아무것도 하지 않음
+        if redis.call('EXISTS', metaKey) == 0 then
+            return 0
+        end
 
         if redis.call('SREM', membersKey, uid) == 1 then
             -- 기존 정리 로직
@@ -338,6 +343,8 @@ public class RedisScriptConfig {
                 -- 5: rooms:active_list
                 -- 6: rooms:hot:zset
                 -- 7: rooms:public:zset
+                -- 8: rooms:{roomId}:nicknames
+                -- 9: rooms:{roomId}:notify
                 -- ARGV:
                 -- 1: roomId
 
@@ -351,11 +358,13 @@ public class RedisScriptConfig {
                 redis.call('del', KEYS[2]) -- room members
                 redis.call('del', KEYS[3]) -- room positions
                 redis.call('del', KEYS[4]) -- room seen users
+                redis.call('DEL', KEYS[8]) -- nicknames
+                redis.call('DEL', KEYS[9]) -- notify
 
                 -- Remove room from sorted sets
-                redis.call('srem', KEYS[5], ARGV[1]) -- active rooms
-                redis.call('zrem', KEYS[6], ARGV[1]) -- hot rooms
-                redis.call('zrem', KEYS[7], ARGV[1]) -- public rooms
+                redis.call('SREM', KEYS[5], ARGV[1]) -- rooms:active_list
+                redis.call('ZREM', KEYS[6], ARGV[1]) -- rooms:hot
+                redis.call('ZREM', KEYS[7], ARGV[1]) -- rooms:public
 
                 return 1
                 """;
