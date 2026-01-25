@@ -12,4 +12,6 @@ public interface RoomFunctionRepository {
     Set<String> roomRecentHot(long from, long now);
 
     Set<String> allRoomIds();
+
+    String getRoomName(UUID roomId);
 }

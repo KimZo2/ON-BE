@@ -39,4 +39,9 @@ public class RoomFunctionRepositoryImpl implements RoomFunctionRepository {
     public Set<String> allRoomIds() {
         return redisTemplate.opsForSet().members(KeyFactory.roomActive());
     }
+
+    @Override
+    public String getRoomName(UUID roomId) {
+        return (String) redisTemplate.opsForHash().get("rooms:" + roomId, "roomName");
+    }
 }
