@@ -43,7 +43,9 @@ public class RoomCleanUpRepositoryImpl implements RoomCleanUpRepository {
                 KeyFactory.roomSeen(roomId),       // KEYS[4]
                 KeyFactory.roomActive(),           // KEYS[5]
                 KeyFactory.roomHot(),              // KEYS[6]
-                KeyFactory.roomPublic()            // KEYS[7]
+                KeyFactory.roomPublic(),           // KEYS[7]
+                KeyFactory.roomNicknames(roomId),  // KEYS[8]
+                KeyFactory.roomNotify(roomId)      // KEYS[9]
         );
 
         redisTemplate.execute(deleteRoomLua, keys, roomId.toString());
