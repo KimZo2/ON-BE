@@ -27,8 +27,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    // 환경변수로 빼기
-    private static final String FRONTEND_URI = "http://localhost:3000";
+    @Value("${app.frontend-uri}")
+    private String frontendUri;
 
     @Value("${jwt.access-token-validity-in-seconds}")
     private long tokenExpireTime;
@@ -45,7 +45,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
         if (role == Role.GUEST) {
 
-            String targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_URI + "/signup")
+            String targetUrl = UriComponentsBuilder.fromUriString(frontendUri + "/signup")
                     .queryParam("memberId", oAuth2User.getMemberId())
                     .queryParam("status", "guest")
                     .build()
@@ -68,7 +68,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
             CookieUtil.addCookie(response, "refresh_token", refreshToken, refreshTokenExpTime);
 
-            String targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_URI + "/login-success")
+            String targetUrl = UriComponentsBuilder.fromUriString(frontendUri + "/login-success")
                     .queryParam("accessToken", accessToken)
                     .queryParam("accessTokenExpire", nowMills)
                     .queryParam("nickname", nickname)
