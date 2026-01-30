@@ -34,7 +34,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
-    @Value("${cors.allowed-origins}")
+    @Value("${cors.allowed-origins:}")
     private List<String> allowedOrigins;
 
     private static final String[] AUTH_WHITELIST = {
