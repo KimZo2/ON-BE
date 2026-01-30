@@ -89,7 +89,7 @@ public class SecurityConfig {
                         )
                 )
 
-                // [유지] 사용자가 제공한 JwtAuthFilter 사용
+                // 사용자가 제공한 JwtAuthFilter 사용
                 .addFilterBefore(jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class);
 
