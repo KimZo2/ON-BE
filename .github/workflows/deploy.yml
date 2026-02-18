@@ -50,6 +50,8 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       # 설정 파일들을 서버로 복사
       - name: Copy config files to EC2
