@@ -72,7 +72,6 @@ public class SecurityConfig {
 
                 // 경로를 AUTH_WHITELIST로 통합
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                         .requestMatchers(AUTH_WHITELIST).permitAll() // AUTH_WHITELIST 경로는 모두 허용
                         .anyRequest().authenticated() // 나머지 모든 경로는 인증 필요
                 )
@@ -104,9 +103,10 @@ public class SecurityConfig {
                 "https://knowwhohow.cloud"
         ));
 
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedOriginPatterns(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true); // JWT 토큰 사용 시, 자격증명(쿠키 등) 불필요
+        configuration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
         configuration.setMaxAge(3600L); // Preflight 요청 캐시 시간 (1시간)
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
