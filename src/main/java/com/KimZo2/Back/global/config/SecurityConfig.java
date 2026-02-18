@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -38,6 +39,7 @@ public class SecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
             "/auth/**",
+            "/oauth2/**",
             "/login/oauth2/**",
             "/swagger-ui/**",
             "/api-docs/**",
@@ -53,42 +55,52 @@ public class SecurityConfig {
     }
 
 
+    // OAuth2 로그인 전용 필터 체인
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain oauth2FilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 적용
-                .csrf(AbstractHttpConfigurer::disable) // CSRF 보호 비활성화
-                .formLogin(AbstractHttpConfigurer::disable) // 폼 로그인 비활성화
-                .httpBasic(AbstractHttpConfigurer::disable) // HTTP 기본 인증 비활성화
-
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션 사용 안 함
-                )
-
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(jwtAuthEntryPoint)    // 401 (인증 실패)
-                        .accessDeniedHandler(jwtAccessDeniedHandler)    // 403 (권한 없음)
-                )
-
-                // 경로를 AUTH_WHITELIST로 통합
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(AUTH_WHITELIST).permitAll() // AUTH_WHITELIST 경로는 모두 허용
-                        .anyRequest().authenticated() // 나머지 모든 경로는 인증 필요
-                )
+                .securityMatcher("/oauth2/**", "/login/oauth2/**")
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
                 .oauth2Login(oauth2 -> oauth2
-                        // 로그인 성공 시 처리할 핸들러 (JWT 발급 및 리다이렉트)
                         .successHandler(oAuth2LoginSuccessHandler)
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                )
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
-                        // 사용자 정보 가져오는 엔드포인트 설정
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
+        return http.build();
+    }
+
+    // 일반 API 요청 전용 필터 체인
+    @Bean
+    @Order(2)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(jwtAuthEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
                 )
 
-                // 사용자가 제공한 JwtAuthFilter 사용
-                .addFilterBefore(jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                .authorizeHttpRequests(authz -> authz
+                        // Preflight(OPTIONS) 요청 명시적 허용
+                        .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
+                        .requestMatchers(AUTH_WHITELIST).permitAll()
+                        .anyRequest().authenticated()
+                )
+
+                // JWT 필터 배치
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -97,13 +109,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(Arrays.asList(
+        configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:3000",
                 "https://on-line-green.vercel.app",
                 "https://knowwhohow.cloud"
         ));
 
-        configuration.setAllowedOriginPatterns(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true); // JWT 토큰 사용 시, 자격증명(쿠키 등) 불필요
         configuration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
